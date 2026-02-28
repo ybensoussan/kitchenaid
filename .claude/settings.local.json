@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(export:*)",
+      "Bash(curl:*)",
+      "Bash(/usr/bin/curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(lsof:*)"
+    ]
+  }
+}

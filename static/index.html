@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KitchenAid Recipe Book</title>
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/grid.css">
+  <script src="/js/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
+    <nav class="header-nav">
+      <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
+      <button id="import-btn" class="btn btn-secondary">⬇ Import URL</button>
+      <a href="/add.html" class="btn btn-primary">+ Add Recipe</a>
+      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">My Recipes</h1>
+    <span id="recipe-count" style="color:var(--muted);font-size:.875rem"></span>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="search-input" class="search-input" placeholder="Search recipes…" autocomplete="off">
+  </div>
+
+  <div id="recipe-grid" class="recipe-grid">
+    <div class="spinner"></div>
+  </div>
+</main>
+
+<!-- Import URL Modal -->
+<div id="import-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Import Recipe</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Mode tabs -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem">
+      <button id="tab-url" class="btn btn-ghost" style="border-radius:0;border-bottom:2px solid var(--brand);font-weight:600">From URL</button>
+      <button id="tab-html" class="btn btn-ghost" style="border-radius:0;border-bottom:2px solid transparent">Paste HTML</button>
+    </div>
+
+    <!-- URL mode -->
+    <form id="import-form">
+      <div id="mode-url">
+        <div class="form-group">
+          <label class="form-label" for="import-url">Recipe URL</label>
+          <input type="url" id="import-url" class="form-input"
+                 placeholder="https://www.allrecipes.com/recipe/…">
+        </div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem">
+          Supports AllRecipes, NYT Cooking, and 30+ other sites.
+        </p>
+      </div>
+
+      <!-- Paste HTML mode -->
+      <div id="mode-html" style="display:none">
+        <div class="form-group">
+          <label class="form-label" for="import-source-url">Source URL <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input type="url" id="import-source-url" class="form-input" placeholder="https://food52.com/recipes/…">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="import-html">Page source HTML</label>
+          <textarea id="import-html" class="form-textarea" rows="6"
+            placeholder="Open the recipe in your browser → right-click → View Page Source (Ctrl+U / Cmd+U) → Select All → paste here"></textarea>
+        </div>
+      </div>
+
+      <div id="import-spinner" class="spinner" style="display:none;margin:0;width:1.2rem;height:1.2rem"></div>
+    </form>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="import-submit" class="btn btn-primary">Import</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/import.js"></script>
+<script src="/js/index.js"></script>
+</body>
+</html>

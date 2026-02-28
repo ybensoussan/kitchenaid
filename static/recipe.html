@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe — KitchenAid</title>
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/recipe.css">
+  <script src="/js/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
+    <nav class="header-nav">
+      <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
+      <button id="cook-btn" class="btn btn-primary">▶ Cook</button>
+      <button id="edit-toggle-btn" class="btn btn-secondary">✏ Edit Recipe</button>
+      <button id="delete-btn" class="btn btn-ghost" style="color:#dc2626" title="Delete recipe">🗑 Delete</button>
+      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page-container" id="content">
+
+  <a href="/" class="back-link">← All Recipes</a>
+
+  <!-- Two-column layout from top -->
+  <div class="recipe-layout">
+
+    <!-- Left 2/3: title/desc/meta + steps -->
+    <div class="recipe-main">
+      <div id="hero">
+        <div class="spinner" style="margin:3rem auto"></div>
+      </div>
+
+      <!-- Recipe toolbar (edit-mode controls) -->
+      <div class="recipe-toolbar edit-controls">
+        <button id="add-step-btn" class="btn btn-secondary btn-sm">+ Add Step</button>
+      </div>
+
+      <section class="steps-column">
+        <h2 class="section-title">Instructions</h2>
+        <ol class="steps-list" id="steps-list"></ol>
+      </section>
+    </div>
+
+    <!-- Right 1/3: photo on top, ingredients below -->
+    <aside class="recipe-sidebar">
+      <div class="recipe-photo-wrap">
+        <div id="recipe-photo"></div>
+        <label id="photo-upload-label" class="photo-upload-overlay" title="Change photo">
+          📷 Change photo
+          <input type="file" id="photo-upload-input" accept="image/jpeg,image/png,image/webp" style="display:none">
+        </label>
+      </div>
+
+      <div class="ingredients-column">
+        <div class="ingredients-card">
+          <div class="ingredients-card-header">
+            <h2 class="section-title" style="margin:0">Ingredients</h2>
+
+            <!-- Units toggle -->
+            <div class="units-toggle">
+              <button class="unit-btn" data-system="metric">Metric</button>
+              <button class="unit-btn" data-system="imperial">Imperial</button>
+            </div>
+          </div>
+
+          <!-- Servings -->
+          <div style="padding:.65rem 1.25rem; border-bottom:1px solid var(--border)">
+            <div class="servings-control">
+              <span class="servings-label">Serves</span>
+              <input type="number" id="servings-input" class="servings-input" min="1" max="100">
+              <button class="serving-btn" data-mult="0.5">½×</button>
+              <button class="serving-btn" data-mult="1">1×</button>
+              <button class="serving-btn" data-mult="2">2×</button>
+              <button class="serving-btn" data-mult="4">4×</button>
+            </div>
+          </div>
+
+          <div class="ingredients-list" id="ingredients-list"></div>
+
+          <button id="add-ingredient-btn" class="ingredients-add-btn">+ Add Ingredient</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+</main>
+
+<!-- Ingredient edit modal -->
+<div id="ingredient-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Ingredient</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <form id="ingredient-form">
+      <div class="form-group">
+        <label class="form-label">Name *</label>
+        <input type="text" name="name" class="form-input" placeholder="e.g. flour" required>
+      </div>
+      <div class="ingredient-modal-grid">
+        <div class="form-group">
+          <label class="form-label">Amount (metric)</label>
+          <input type="number" name="amount" class="form-input" placeholder="250" step="any" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <select name="unit" class="form-select">
+            <option value="">— none —</option>
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="cup">cup</option>
+            <option value="tsp">tsp</option>
+            <option value="tbsp">tbsp</option>
+            <option value="°C">°C</option>
+            <option value="piece">piece</option>
+            <option value="pinch">pinch</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" name="notes" class="form-input" placeholder="e.g. sifted, at room temperature">
+      </div>
+    </form>
+    <div class="modal-footer">
+      <button id="ingredient-pantry-btn" type="button" class="btn btn-ghost">🧺 Save to Pantry</button>
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="ingredient-save-btn" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ingredient alternatives modal -->
+<div id="alternatives-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Alternatives for <span id="alt-ing-name" style="color:var(--brand)"></span></h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="alternatives-body"></div>
+  </div>
+</div>
+
+<!-- Cooking mode overlay -->
+<div id="cooking-mode" class="cooking-mode" aria-hidden="true">
+  <div class="cook-header">
+    <h1 class="cook-title" id="cook-title"></h1>
+    <div class="cook-header-actions">
+      <span class="cook-wake-dot" id="cook-wake-dot" title="Screen stay-awake active"></span>
+      <div class="cook-units-toggle" id="cook-units-toggle">
+        <button class="cook-unit-btn" data-system="metric">Metric</button>
+        <button class="cook-unit-btn" data-system="imperial">Imperial</button>
+      </div>
+      <button class="cook-exit-btn" id="cook-exit-btn">✕ Exit</button>
+    </div>
+  </div>
+  <div class="cook-body">
+    <aside class="cook-ingredients-panel">
+      <p class="cook-panel-label">Ingredients</p>
+      <ul class="cook-ingredient-list" id="cook-ingredient-list"></ul>
+    </aside>
+    <main class="cook-steps-panel">
+      <p class="cook-panel-label">Steps</p>
+      <ol class="cook-steps-list" id="cook-steps-list"></ol>
+    </main>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/units.js"></script>
+<script src="/js/scaling.js"></script>
+<script src="/js/editor.js"></script>
+<script src="/js/recipe.js"></script>
+</body>
+</html>

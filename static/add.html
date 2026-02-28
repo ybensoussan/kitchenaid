@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Recipe — KitchenAid</title>
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/theme.js"></script>
+  <style>
+    .add-container { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius)*1.5);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .dynamic-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .dynamic-row {
+      display: grid;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .ing-row  { grid-template-columns: 3fr 1fr 1fr 1.5fr auto auto; }
+    .pantry-btn {
+      background: none; border: none; cursor: pointer; color: var(--brand);
+      font-size: 1rem; padding: 0.2rem 0.4rem; border-radius: 4px;
+      white-space: nowrap;
+    }
+    .pantry-btn:hover { background: var(--hover-soft); }
+    .step-row { grid-template-columns: auto 1fr auto; }
+    .step-num {
+      width: 2rem; height: 2rem;
+      background: var(--brand); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .remove-btn {
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 1rem; padding: 0.2rem 0.4rem; border-radius: 4px;
+    }
+    .remove-btn:hover { color: #dc2626; background: #fee2e2; }
+    .add-row-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: none; border: 1px dashed var(--border);
+      color: var(--brand); font-size: .85rem; font-weight: 500;
+      padding: .4rem .75rem; border-radius: var(--radius); cursor: pointer;
+    }
+    .add-row-btn:hover { background: var(--hover-soft); }
+    .image-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius); display: none; margin-top: .75rem; }
+    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem; }
+    @media (max-width: 600px) {
+      .ing-row { grid-template-columns: 1fr 1fr auto auto; }
+      .ing-row > *:first-child { grid-column: 1/-1; }
+      .ing-row > *:nth-child(4) { grid-column: 1/-1; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
+    <nav class="header-nav">
+      <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
+      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<main class="add-container">
+  <a href="/" class="back-link">← Back</a>
+  <h1 class="page-title" id="page-title" style="margin-bottom:1.5rem">Add Recipe</h1>
+
+  <form id="recipe-form" novalidate>
+
+    <!-- Basic info -->
+    <div class="section-card">
+      <h2>Basic Info</h2>
+      <div class="form-group">
+        <label class="form-label" for="title">Title *</label>
+        <input type="text" id="title" name="title" class="form-input" placeholder="Chocolate chip cookies" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="description">Description</label>
+        <textarea id="description" name="description" class="form-textarea" placeholder="A brief description of the recipe…" rows="2"></textarea>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label" for="prep_time">Prep time (min)</label>
+          <input type="number" id="prep_time" name="prep_time" class="form-input" min="0" placeholder="15">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cook_time">Cook time (min)</label>
+          <input type="number" id="cook_time" name="cook_time" class="form-input" min="0" placeholder="30">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="base_servings">Servings</label>
+          <input type="number" id="base_servings" name="base_servings" class="form-input" min="1" placeholder="4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="source_url">Source URL</label>
+        <input type="url" id="source_url" name="source_url" class="form-input" placeholder="https://…">
+      </div>
+    </div>
+
+    <!-- Photo -->
+    <div class="section-card">
+      <h2>Photo</h2>
+      <div class="form-group">
+        <label class="form-label" for="image_url">Image URL</label>
+        <input type="text" id="image_url" name="image_url" class="form-input" placeholder="https://… or upload below">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="image_file">Upload Image</label>
+        <input type="file" id="image_file" accept="image/jpeg,image/png,image/webp" class="form-input" style="padding:.4rem">
+      </div>
+      <img id="image-preview" class="image-preview" alt="Preview">
+    </div>
+
+    <!-- Ingredients -->
+    <div class="section-card">
+      <h2>Ingredients <span style="color:var(--muted);font-weight:400;font-size:.8rem">(store amounts in metric)</span></h2>
+      <div class="dynamic-list" id="ingredients-list"></div>
+      <button type="button" class="add-row-btn" id="add-ingredient">+ Add Ingredient</button>
+    </div>
+
+    <!-- Steps -->
+    <div class="section-card">
+      <h2>Steps</h2>
+      <div class="dynamic-list" id="steps-list"></div>
+      <button type="button" class="add-row-btn" id="add-step">+ Add Step</button>
+    </div>
+
+    <div class="form-actions">
+      <a href="/" class="btn btn-secondary">Cancel</a>
+      <button type="submit" id="submit-btn" class="btn btn-primary">Save Recipe</button>
+    </div>
+
+  </form>
+</main>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script>
+(async () => {
+  const isImport = new URLSearchParams(location.search).get('source') === 'import';
+  let importData = null;
+
+  if (isImport) {
+    const raw = sessionStorage.getItem('kitchenaid_import');
+    if (raw) {
+      importData = JSON.parse(raw);
+      sessionStorage.removeItem('kitchenaid_import');
+      document.getElementById('page-title').textContent = 'Review Imported Recipe';
+    }
+  }
+
+  // ── Load pantry items for autocomplete + auto-fill ───────────────────────
+
+  let pantryItems = [];
+  try {
+    pantryItems = await api.listPantryItems();
+  } catch (_) {}
+
+  const datalistId = 'pantry-names-list';
+  const dl = document.createElement('datalist');
+  dl.id = datalistId;
+  pantryItems.forEach(it => {
+    const opt = document.createElement('option');
+    opt.value = it.name;
+    dl.appendChild(opt);
+  });
+  document.body.appendChild(dl);
+
+  // ── Ingredient rows ──────────────────────────────────────────────────────
+
+  const ingList = document.getElementById('ingredients-list');
+  let ingCount = 0;
+
+  function addIngredientRow(data = {}) {
+    const i = ingCount++;
+    const row = document.createElement('div');
+    row.className = 'dynamic-row ing-row';
+    row.innerHTML = `
+      <input type="text" class="form-input" name="ing_name_${i}" placeholder="Ingredient name" list="${datalistId}" value="${escVal(data.name||'')}">
+      <input type="number" class="form-input" name="ing_amount_${i}" placeholder="Amount" step="any" min="0" value="${data.amount||''}">
+      <select class="form-select" name="ing_unit_${i}">
+        <option value="">—</option>
+        ${['g','ml','cup','tsp','tbsp','°C','piece','pinch'].map(u =>
+          `<option value="${u}" ${data.unit===u?'selected':''}>${u}</option>`).join('')}
+      </select>
+      <input type="text" class="form-input" name="ing_notes_${i}" placeholder="Notes (optional)" value="${escVal(data.notes||'')}">
+      <button type="button" class="pantry-btn" title="Save to Pantry">🧺</button>
+      <button type="button" class="remove-btn" onclick="this.parentElement.remove()" title="Remove">✕</button>`;
+    const nameInput   = row.querySelector('[name^=ing_name]');
+    const amountInput = row.querySelector('[name^=ing_amount]');
+    const unitSelect  = row.querySelector('[name^=ing_unit]');
+    const notesInput  = row.querySelector('[name^=ing_notes]');
+
+    // Auto-fill from pantry when a known name is chosen
+    nameInput.addEventListener('change', () => {
+      const match = pantryItems.find(it => it.name.toLowerCase() === nameInput.value.trim().toLowerCase());
+      if (!match) return;
+      if (match.amount)  amountInput.value = match.amount;
+      if (match.unit)    unitSelect.value  = match.unit;
+      if (match.notes)   notesInput.value  = match.notes;
+    });
+
+    const pantryBtn = row.querySelector('.pantry-btn');
+    pantryBtn.addEventListener('click', async () => {
+      const name   = nameInput.value.trim();
+      if (!name) { showToast('Enter a name first', true); return; }
+      const amount = parseFloat(amountInput.value) || 0;
+      const unit   = unitSelect.value;
+      const notes  = notesInput.value.trim();
+      try {
+        await api.createPantryItem({ name, amount, unit, notes });
+        showToast(`"${name}" saved to pantry`);
+        if (!pantryItems.find(it => it.name === name)) {
+          pantryItems.push({ name, amount, unit, notes });
+          const opt = document.createElement('option');
+          opt.value = name;
+          dl.appendChild(opt);
+        }
+      } catch (e) {
+        showToast('Pantry save failed: ' + e.message, true);
+      }
+    });
+    ingList.appendChild(row);
+  }
+
+  document.getElementById('add-ingredient').addEventListener('click', () => addIngredientRow());
+
+  // ── Step rows ─────────────────────────────────────────────────────────────
+
+  const stepList = document.getElementById('steps-list');
+  let stepCount = 0;
+
+  function addStepRow(data = {}) {
+    const i = stepCount++;
+    const num = stepList.querySelectorAll('.dynamic-row').length + 1;
+    const row = document.createElement('div');
+    row.className = 'dynamic-row step-row';
+    row.innerHTML = `
+      <div class="step-num">${num}</div>
+      <textarea class="form-textarea" name="step_instruction_${i}" placeholder="Describe this step…" rows="2">${escVal(data.instruction||'')}</textarea>
+      <button type="button" class="remove-btn" onclick="this.parentElement.remove(); renumberSteps()" title="Remove">✕</button>`;
+    stepList.appendChild(row);
+  }
+
+  window.renumberSteps = () => {
+    stepList.querySelectorAll('.step-num').forEach((el, idx) => { el.textContent = idx + 1; });
+  };
+
+  document.getElementById('add-step').addEventListener('click', () => addStepRow());
+
+  // ── Image upload preview ──────────────────────────────────────────────────
+
+  const fileInput   = document.getElementById('image_file');
+  const imageUrlIn  = document.getElementById('image_url');
+  const preview     = document.getElementById('image-preview');
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+  });
+
+  imageUrlIn.addEventListener('input', () => {
+    if (imageUrlIn.value) {
+      preview.src = imageUrlIn.value;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  });
+
+  // ── Pre-fill from import ──────────────────────────────────────────────────
+
+  if (importData) {
+    document.getElementById('title').value         = importData.title         || '';
+    document.getElementById('description').value   = importData.description   || '';
+    document.getElementById('prep_time').value     = importData.prep_time     || '';
+    document.getElementById('cook_time').value     = importData.cook_time     || '';
+    document.getElementById('base_servings').value = importData.base_servings || 4;
+    document.getElementById('source_url').value    = importData.source_url    || '';
+    document.getElementById('image_url').value     = importData.image_url     || '';
+    if (importData.image_url) {
+      preview.src = importData.image_url;
+      preview.style.display = 'block';
+    }
+    (importData.ingredients || []).forEach(ing => addIngredientRow(ing));
+    (importData.steps       || []).forEach(s   => addStepRow(s));
+  } else {
+    // Start with 1 empty row each
+    addIngredientRow();
+    addStepRow();
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+
+  document.getElementById('recipe-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      // Upload image if file selected
+      let imageURL = imageUrlIn.value.trim();
+      const file = fileInput.files[0];
+      if (file) {
+        const uploaded = await api.upload(file);
+        imageURL = uploaded.url;
+      }
+
+      // Collect ingredients
+      const ingredients = [];
+      ingList.querySelectorAll('.dynamic-row').forEach((row, idx) => {
+        const name = row.querySelector('[name^=ing_name]')?.value.trim();
+        if (!name) return;
+        ingredients.push({
+          name,
+          amount: parseFloat(row.querySelector('[name^=ing_amount]')?.value) || 0,
+          unit:   row.querySelector('[name^=ing_unit]')?.value || '',
+          notes:  row.querySelector('[name^=ing_notes]')?.value.trim() || '',
+          sort_order: idx,
+        });
+      });
+
+      // Collect steps
+      const steps = [];
+      stepList.querySelectorAll('.dynamic-row').forEach((row, idx) => {
+        const instruction = row.querySelector('textarea')?.value.trim();
+        if (!instruction) return;
+        steps.push({ step_number: idx + 1, instruction, duration: 0 });
+      });
+
+      const data = {
+        title:         document.getElementById('title').value.trim(),
+        description:   document.getElementById('description').value.trim(),
+        prep_time:     parseInt(document.getElementById('prep_time').value)    || 0,
+        cook_time:     parseInt(document.getElementById('cook_time').value)    || 0,
+        base_servings: parseInt(document.getElementById('base_servings').value)|| 4,
+        source_url:    document.getElementById('source_url').value.trim(),
+        image_url:     imageURL,
+        ingredients,
+        steps,
+      };
+
+      if (!data.title) { showToast('Title is required', true); btn.disabled = false; btn.textContent = 'Save Recipe'; return; }
+
+      const recipe = await api.createRecipe(data);
+      window.location.href = `/recipe.html?id=${recipe.id}`;
+    } catch (err) {
+      showToast('Save failed: ' + err.message, true);
+      btn.disabled = false;
+      btn.textContent = 'Save Recipe';
+    }
+  });
+
+  function escVal(s) {
+    return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function showToast(msg, isError = false) {
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+})();
+</script>
+</body>
+</html>

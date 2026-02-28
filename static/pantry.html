@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pantry — KitchenAid</title>
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/theme.js"></script>
+  <style>
+    .pantry-container { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius)*1.5);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .add-form .form-group { margin: 0; flex: 1; min-width: 120px; }
+    .add-form .form-group.grow2 { flex: 2; }
+    .pantry-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius)*1.5);
+      overflow: hidden;
+    }
+    .pantry-search {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .pantry-list { list-style: none; padding: 0; margin: 0; }
+    .pantry-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .pantry-item:last-child { border-bottom: none; }
+    .pantry-item-name { flex: 2; font-weight: 500; }
+    .pantry-item-amount { color: var(--brand); font-weight: 600; min-width: 3.5rem; text-align: right; white-space: nowrap; }
+    .pantry-item-unit { color: var(--muted); min-width: 2.5rem; }
+    .pantry-item-notes { color: var(--muted); font-size: 0.8rem; font-style: italic; flex: 1; }
+    .pantry-item-edit { display: none; flex: 1; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .pantry-item-edit .form-input { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
+    .pantry-item-edit .form-select { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
+    .pantry-item.editing .pantry-item-view { display: none; }
+    .pantry-item.editing .pantry-item-edit { display: flex; }
+    .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+    .empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
+    .btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
+    <nav class="header-nav">
+      <a href="/" class="btn btn-secondary">← Recipes</a>
+      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<main class="pantry-container">
+  <div class="page-header">
+    <h1 class="page-title">🧺 Pantry</h1>
+  </div>
+
+  <!-- Add form -->
+  <div class="add-form">
+    <div class="form-group grow2">
+      <label class="form-label" for="new-name">Ingredient name *</label>
+      <input type="text" id="new-name" class="form-input" placeholder="e.g. flour">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="new-amount">Amount</label>
+      <input type="number" id="new-amount" class="form-input" placeholder="0" step="any" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="new-unit">Unit</label>
+      <select id="new-unit" class="form-select">
+        <option value="">—</option>
+        <option value="g">g</option>
+        <option value="ml">ml</option>
+        <option value="cup">cup</option>
+        <option value="tsp">tsp</option>
+        <option value="tbsp">tbsp</option>
+        <option value="piece">piece</option>
+        <option value="pinch">pinch</option>
+      </select>
+    </div>
+    <div class="form-group grow2">
+      <label class="form-label" for="new-notes">Notes</label>
+      <input type="text" id="new-notes" class="form-input" placeholder="e.g. sifted">
+    </div>
+    <button id="add-btn" class="btn btn-primary">Add</button>
+  </div>
+
+  <!-- Search + list -->
+  <div class="pantry-table">
+    <div class="pantry-search">
+      <input type="search" id="search-input" class="search-input" placeholder="Search pantry…" autocomplete="off">
+    </div>
+    <ul class="pantry-list" id="pantry-list">
+      <li class="empty-state">Loading…</li>
+    </ul>
+  </div>
+</main>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script>
+(async () => {
+  let items = [];
+
+  function showToast(msg, isError = false) {
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function loadItems() {
+    try {
+      items = await api.listPantryItems();
+    } catch (e) {
+      showToast('Failed to load pantry: ' + e.message, true);
+      items = [];
+    }
+    renderList(document.getElementById('search-input').value);
+  }
+
+  const UNITS = ['g','ml','cup','tsp','tbsp','piece','pinch'];
+
+  function unitOptions(selected) {
+    return `<option value="">—</option>` +
+      UNITS.map(u => `<option value="${u}"${selected===u?' selected':''}>${u}</option>`).join('');
+  }
+
+  function renderList(query = '') {
+    const list = document.getElementById('pantry-list');
+    const q = query.toLowerCase();
+    const filtered = items.filter(it =>
+      it.name.toLowerCase().includes(q) ||
+      (it.notes||'').toLowerCase().includes(q)
+    );
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<li class="empty-state">${items.length === 0 ? 'No pantry items yet. Add one above.' : 'No results.'}</li>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(it => `
+      <li class="pantry-item" data-id="${it.id}">
+        <div class="pantry-item-view">
+          <span class="pantry-item-name">${escHtml(it.name)}</span>
+          <span class="pantry-item-amount">${it.amount || ''}</span>
+          <span class="pantry-item-unit">${escHtml(it.unit)}</span>
+          <span class="pantry-item-notes">${escHtml(it.notes)}</span>
+          <button class="btn btn-ghost btn-icon edit-btn" title="Edit">✏</button>
+          <button class="btn btn-ghost btn-icon delete-btn" title="Delete" style="color:#dc2626">🗑</button>
+        </div>
+        <div class="pantry-item-edit">
+          <input type="text"   class="form-input edit-name"   value="${escHtml(it.name)}"  placeholder="Name" style="flex:2;min-width:100px">
+          <input type="number" class="form-input edit-amount" value="${it.amount||''}"      placeholder="0" step="any" min="0" style="width:70px">
+          <select class="form-select edit-unit" style="width:80px">${unitOptions(it.unit)}</select>
+          <input type="text"   class="form-input edit-notes"  value="${escHtml(it.notes)}" placeholder="Notes" style="flex:1;min-width:80px">
+          <button class="btn btn-primary btn-sm save-edit-btn">Save</button>
+          <button class="btn btn-secondary btn-sm cancel-edit-btn">Cancel</button>
+        </div>
+      </li>`).join('');
+
+    list.querySelectorAll('.pantry-item').forEach(el => {
+      const id = parseInt(el.dataset.id, 10);
+      const item = items.find(it => it.id === id);
+
+      el.querySelector('.edit-btn').addEventListener('click', () => {
+        el.classList.add('editing');
+        el.querySelector('.edit-name').focus();
+      });
+
+      el.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+        el.classList.remove('editing');
+      });
+
+      el.querySelector('.save-edit-btn').addEventListener('click', async () => {
+        const name   = el.querySelector('.edit-name').value.trim();
+        const amount = parseFloat(el.querySelector('.edit-amount').value) || 0;
+        const unit   = el.querySelector('.edit-unit').value;
+        const notes  = el.querySelector('.edit-notes').value.trim();
+        if (!name) { showToast('Name is required', true); return; }
+        try {
+          await api.updatePantryItem(id, { name, amount, unit, notes });
+          await loadItems();
+        } catch (e) {
+          showToast('Update failed: ' + e.message, true);
+        }
+      });
+
+      el.querySelector('.delete-btn').addEventListener('click', async () => {
+        if (!confirm(`Delete "${item.name}" from pantry?`)) return;
+        try {
+          await api.deletePantryItem(id);
+          await loadItems();
+        } catch (e) {
+          showToast('Delete failed: ' + e.message, true);
+        }
+      });
+    });
+  }
+
+  // ── Add new item ──────────────────────────────────────────────────────────
+
+  document.getElementById('add-btn').addEventListener('click', async () => {
+    const nameIn   = document.getElementById('new-name');
+    const amountIn = document.getElementById('new-amount');
+    const unitIn   = document.getElementById('new-unit');
+    const notesIn  = document.getElementById('new-notes');
+    const name     = nameIn.value.trim();
+    if (!name) { showToast('Name is required', true); nameIn.focus(); return; }
+    const amount = parseFloat(amountIn.value) || 0;
+    const unit   = unitIn.value;
+    const notes  = notesIn.value.trim();
+    try {
+      await api.createPantryItem({ name, amount, unit, notes });
+      nameIn.value = ''; amountIn.value = ''; unitIn.value = ''; notesIn.value = '';
+      nameIn.focus();
+      await loadItems();
+    } catch (e) {
+      showToast('Add failed: ' + e.message, true);
+    }
+  });
+
+  document.getElementById('new-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('add-btn').click();
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+
+  document.getElementById('search-input').addEventListener('input', e => {
+    renderList(e.target.value);
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────────────
+
+  await loadItems();
+})();
+</script>
+</body>
+</html>
