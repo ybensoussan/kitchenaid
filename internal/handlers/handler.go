@@ -10,6 +10,7 @@ import (
 type Handler struct {
 	Store      *db.Store
 	UploadsDir string
+	DBPath     string
 }
 
 func (h *Handler) writeJSON(w http.ResponseWriter, status int, data interface{}) {

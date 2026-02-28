@@ -29,6 +29,23 @@ func New(dsn string) (*Store, error) {
 	return s, nil
 }
 
+func (s *Store) Reopen(dsn string) error {
+	db, err := sql.Open("sqlite", dsn+"?_journal_mode=WAL&_foreign_keys=on")
+	if err != nil {
+		return fmt.Errorf("open db: %w", err)
+	}
+	db.SetMaxOpenConns(1)
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("ping db: %w", err)
+	}
+	s.db = db
+	return nil
+}
+
+func (s *Store) Close() error {
+	return s.db.Close()
+}
+
 func (s *Store) migrate() error {
 	if _, err := s.db.Exec(schema); err != nil {
 		return err
@@ -47,11 +64,28 @@ func (s *Store) migrate() error {
 
 // ── Recipes ──────────────────────────────────────────────────────────────────
 
-func (s *Store) ListRecipes() ([]models.Recipe, error) {
-	rows, err := s.db.Query(`
-		SELECT id, title, description, image_url, prep_time, cook_time,
-		       base_servings, source_url, created_at, updated_at
-		FROM recipes ORDER BY id DESC`)
+func (s *Store) ListRecipes(tagFilter string) ([]models.Recipe, error) {
+	var query string
+	var args []interface{}
+
+	if tagFilter != "" {
+		query = `
+			SELECT r.id, r.title, r.description, r.image_url, r.prep_time, r.cook_time,
+			       r.base_servings, r.source_url, r.created_at, r.updated_at
+			FROM recipes r
+			JOIN recipe_tags rt ON r.id = rt.recipe_id
+			JOIN tags t ON rt.tag_id = t.id
+			WHERE t.name = ?
+			ORDER BY r.id DESC`
+		args = append(args, strings.ToLower(tagFilter))
+	} else {
+		query = `
+			SELECT id, title, description, image_url, prep_time, cook_time,
+			       base_servings, source_url, created_at, updated_at
+			FROM recipes ORDER BY id DESC`
+	}
+
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +101,15 @@ func (s *Store) ListRecipes() ([]models.Recipe, error) {
 		}
 		recipes = append(recipes, r)
 	}
-	return recipes, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close() // release connection before issuing more queries
+
+	for i := range recipes {
+		recipes[i].Tags, _ = s.GetRecipeTags(recipes[i].ID)
+	}
+	return recipes, nil
 }
 
 func (s *Store) GetRecipe(id int64) (*models.Recipe, error) {
@@ -91,6 +133,10 @@ func (s *Store) GetRecipe(id int64) (*models.Recipe, error) {
 		return nil, err
 	}
 	r.Steps, err = s.GetSteps(id)
+	if err != nil {
+		return nil, err
+	}
+	r.Tags, err = s.GetRecipeTags(id)
 	return r, err
 }
 
@@ -338,6 +384,141 @@ func (s *Store) UpdateStep(id, recipeID int64, inp models.StepInput) (*models.St
 func (s *Store) DeleteStep(id, recipeID int64) error {
 	_, err := s.db.Exec(`DELETE FROM steps WHERE id=? AND recipe_id=?`, id, recipeID)
 	return err
+}
+
+// ── Tags ──────────────────────────────────────────────────────────────────────
+
+func (s *Store) GetRecipeTags(recipeID int64) ([]string, error) {
+	rows, err := s.db.Query(`
+		SELECT t.name FROM tags t
+		JOIN recipe_tags rt ON t.id = rt.tag_id
+		WHERE rt.recipe_id = ?
+		ORDER BY t.name`, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, name)
+	}
+	return tags, rows.Err()
+}
+
+func (s *Store) ListAllTags() ([]string, error) {
+	rows, err := s.db.Query(`SELECT name FROM tags ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, name)
+	}
+	return tags, rows.Err()
+}
+
+func (s *Store) AddRecipeTag(recipeID int64, tagName string) error {
+	tagName = strings.ToLower(strings.TrimSpace(tagName))
+	if tagName == "" {
+		return nil
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var tagID int64
+	err = tx.QueryRow(`SELECT id FROM tags WHERE name = ?`, tagName).Scan(&tagID)
+	if err == sql.ErrNoRows {
+		res, err := tx.Exec(`INSERT INTO tags (name) VALUES (?)`, tagName)
+		if err != nil {
+			return err
+		}
+		tagID, _ = res.LastInsertId()
+	} else if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`, recipeID, tagID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (s *Store) RemoveRecipeTag(recipeID int64, tagName string) error {
+	tagName = strings.ToLower(strings.TrimSpace(tagName))
+	_, err := s.db.Exec(`
+		DELETE FROM recipe_tags
+		WHERE recipe_id = ? AND tag_id = (SELECT id FROM tags WHERE name = ?)`,
+		recipeID, tagName)
+	return err
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+func (s *Store) GetSettings() (models.Settings, error) {
+	rows, err := s.db.Query(`SELECT key, value FROM settings`)
+	if err != nil {
+		return models.Settings{}, err
+	}
+	defer rows.Close()
+
+	settings := models.Settings{AIProvider: "anthropic"}
+	for rows.Next() {
+		var k, v string
+		if err := rows.Scan(&k, &v); err != nil {
+			return settings, err
+		}
+		switch k {
+		case "ai_provider":
+			settings.AIProvider = v
+		case "anthropic_api_key":
+			settings.AnthropicAPIKey = v
+		case "gemini_api_key":
+			settings.GeminiAPIKey = v
+		case "model":
+			settings.Model = v
+		}
+	}
+	return settings, nil
+}
+
+func (s *Store) UpdateSettings(settings models.Settings) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	upsert := `INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+	if _, err := tx.Exec(upsert, "ai_provider", settings.AIProvider); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "anthropic_api_key", settings.AnthropicAPIKey); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "gemini_api_key", settings.GeminiAPIKey); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "model", settings.Model); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // buildPlaceholders returns "(?,?,?)" for n items

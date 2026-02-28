@@ -54,6 +54,41 @@
     .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
     .empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
     .btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
+
+    /* Manage Units panel */
+    .units-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius)*1.5);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .units-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.25rem; cursor: pointer; user-select: none;
+      font-size: 0.875rem; font-weight: 600; color: var(--muted);
+    }
+    .units-panel-header:hover { color: var(--text); }
+    .units-panel-header .chevron { transition: transform 0.2s; font-style: normal; }
+    .units-panel.open .units-panel-header .chevron { transform: rotate(180deg); }
+    .units-panel-body { display: none; padding: 0.75rem 1.25rem 1rem; border-top: 1px solid var(--border); }
+    .units-panel.open .units-panel-body { display: block; }
+    .units-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; min-height: 2rem; }
+    .unit-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: var(--hover-bg); border: 1px solid var(--border);
+      border-radius: 99px; padding: 0.2rem 0.6rem 0.2rem 0.75rem;
+      font-size: 0.8rem; font-weight: 500;
+    }
+    .unit-chip-remove {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: var(--muted); font-size: 0.9rem; line-height: 1;
+    }
+    .unit-chip-remove:hover { color: #dc2626; }
+    .units-add-row { display: flex; gap: 0.5rem; align-items: center; }
+    .units-add-row .form-input { width: 8rem; font-size: 0.85rem; padding: 0.35rem 0.6rem; }
+    .units-reset { font-size: 0.78rem; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0; margin-left: auto; }
+    .units-reset:hover { color: var(--brand); text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -63,7 +98,8 @@
     <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
     <nav class="header-nav">
       <a href="/" class="btn btn-secondary">← Recipes</a>
-      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+      <a href="/settings.html" class="btn btn-secondary">⚙ Settings</a>
+      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
     </nav>
   </div>
 </header>
@@ -71,6 +107,22 @@
 <main class="pantry-container">
   <div class="page-header">
     <h1 class="page-title">🧺 Pantry</h1>
+  </div>
+
+  <!-- Manage Units panel -->
+  <div class="units-panel" id="units-panel">
+    <div class="units-panel-header" id="units-panel-toggle">
+      <span>⚖ Manage Units</span>
+      <i class="chevron">▾</i>
+    </div>
+    <div class="units-panel-body">
+      <div class="units-chips" id="units-chips"></div>
+      <div class="units-add-row">
+        <input type="text" id="unit-add-input" class="form-input" placeholder="New unit…" maxlength="16">
+        <button id="unit-add-btn" class="btn btn-secondary btn-sm">Add</button>
+        <button id="unit-reset-btn" class="units-reset">Reset to defaults</button>
+      </div>
+    </div>
   </div>
 
   <!-- Add form -->
@@ -85,16 +137,7 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="new-unit">Unit</label>
-      <select id="new-unit" class="form-select">
-        <option value="">—</option>
-        <option value="g">g</option>
-        <option value="ml">ml</option>
-        <option value="cup">cup</option>
-        <option value="tsp">tsp</option>
-        <option value="tbsp">tbsp</option>
-        <option value="piece">piece</option>
-        <option value="pinch">pinch</option>
-      </select>
+      <select id="new-unit" class="form-select"></select>
     </div>
     <div class="form-group grow2">
       <label class="form-label" for="new-notes">Notes</label>
@@ -117,6 +160,7 @@
 <div id="toast-container" class="toast-container"></div>
 
 <script src="/js/api.js"></script>
+<script src="/js/unit-list.js"></script>
 <script>
 (async () => {
   let items = [];
@@ -144,12 +188,58 @@
     renderList(document.getElementById('search-input').value);
   }
 
-  const UNITS = ['g','ml','cup','tsp','tbsp','piece','pinch'];
+  // ── Manage Units panel ────────────────────────────────────────────────────
 
-  function unitOptions(selected) {
-    return `<option value="">—</option>` +
-      UNITS.map(u => `<option value="${u}"${selected===u?' selected':''}>${u}</option>`).join('');
+  function renderUnitChips() {
+    const chips = document.getElementById('units-chips');
+    chips.innerHTML = unitList.get().map(u => `
+      <span class="unit-chip">
+        ${escHtml(u)}
+        <button class="unit-chip-remove" data-unit="${escHtml(u)}" title="Remove ${escHtml(u)}">×</button>
+      </span>`).join('');
+    chips.querySelectorAll('.unit-chip-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        unitList.remove(btn.dataset.unit);
+        renderUnitChips();
+        refreshAllUnitSelects();
+      });
+    });
+    // Re-populate the add-form select too
+    unitList.populateSelect(document.getElementById('new-unit'));
   }
+
+  function refreshAllUnitSelects() {
+    unitList.populateSelect(document.getElementById('new-unit'));
+    // Re-render list so inline edit selects also reflect new unit list
+    renderList(document.getElementById('search-input').value);
+  }
+
+  document.getElementById('units-panel-toggle').addEventListener('click', () => {
+    document.getElementById('units-panel').classList.toggle('open');
+  });
+
+  document.getElementById('unit-add-btn').addEventListener('click', () => {
+    const inp = document.getElementById('unit-add-input');
+    const val = inp.value.trim();
+    if (!val) return;
+    if (!unitList.add(val)) { showToast(`"${val}" already in list`); return; }
+    inp.value = '';
+    renderUnitChips();
+    refreshAllUnitSelects();
+  });
+
+  document.getElementById('unit-add-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('unit-add-btn').click();
+  });
+
+  document.getElementById('unit-reset-btn').addEventListener('click', () => {
+    if (!confirm('Reset units to defaults?')) return;
+    unitList.reset();
+    renderUnitChips();
+    refreshAllUnitSelects();
+  });
+
+  renderUnitChips();
 
   function renderList(query = '') {
     const list = document.getElementById('pantry-list');
@@ -177,12 +267,17 @@
         <div class="pantry-item-edit">
           <input type="text"   class="form-input edit-name"   value="${escHtml(it.name)}"  placeholder="Name" style="flex:2;min-width:100px">
           <input type="number" class="form-input edit-amount" value="${it.amount||''}"      placeholder="0" step="any" min="0" style="width:70px">
-          <select class="form-select edit-unit" style="width:80px">${unitOptions(it.unit)}</select>
+          <select class="form-select edit-unit" style="width:80px" data-selected="${escHtml(it.unit)}"></select>
           <input type="text"   class="form-input edit-notes"  value="${escHtml(it.notes)}" placeholder="Notes" style="flex:1;min-width:80px">
           <button class="btn btn-primary btn-sm save-edit-btn">Save</button>
           <button class="btn btn-secondary btn-sm cancel-edit-btn">Cancel</button>
         </div>
       </li>`).join('');
+
+    // Populate unit selects dynamically
+    list.querySelectorAll('.edit-unit').forEach(sel => {
+      unitList.populateSelect(sel, sel.dataset.selected);
+    });
 
     list.querySelectorAll('.pantry-item').forEach(el => {
       const id = parseInt(el.dataset.id, 10);

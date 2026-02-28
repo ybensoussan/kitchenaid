@@ -53,13 +53,27 @@ const api = {
   // Import
   importURL:  (url)             => api.post('/api/import/url',  { url }),
   importHTML: (html, sourceURL) => api.post('/api/import/html', { html, source_url: sourceURL }),
+  importText: (text, method)    => api.post('/api/import/text', { text, method }),
+
+  // Images
+  searchImages: (q) => api.get(`/api/images/search?q=${encodeURIComponent(q)}`),
 
   // Alternatives
   findAlternatives: (data) => api.post('/api/alternatives', data),
 
+  // Models
+  listModels: () => api.get('/api/models'),
+
+  // Tags
+  listTags:      ()          => api.get('/api/tags'),
+  addRecipeTag:  (rid, name) => api.post(`/api/recipes/${rid}/tags`, { name }),
+  removeRecipeTag: (rid, name) => api.delete(`/api/recipes/${rid}/tags/${encodeURIComponent(name)}`),
+  suggestTags:   (rid)       => api.post(`/api/recipes/${rid}/tags/suggest`),
+
   // Pantry
-  listPantryItems:   ()             => api.get('/api/pantry'),
-  createPantryItem:  (data)         => api.post('/api/pantry', data),
-  updatePantryItem:  (id, data)     => api.put(`/api/pantry/${id}`, data),
-  deletePantryItem:  (id)           => api.delete(`/api/pantry/${id}`),
+  listPantryItems:    ()             => api.get('/api/pantry'),
+  createPantryItem:   (data)         => api.post('/api/pantry', data),
+  updatePantryItem:   (id, data)     => api.put(`/api/pantry/${id}`, data),
+  deletePantryItem:   (id)           => api.delete(`/api/pantry/${id}`),
+  batchAddPantryItems: (items)       => api.post('/api/pantry/batch', items),
 };

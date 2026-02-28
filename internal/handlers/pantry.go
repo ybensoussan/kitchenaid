@@ -63,6 +63,24 @@ func (h *Handler) UpdatePantryItem(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, item)
 }
 
+func (h *Handler) BatchAddPantryItems(w http.ResponseWriter, r *http.Request) {
+	var items []models.PantryItemInput
+	if err := h.decodeJSON(r, &items); err != nil || len(items) == 0 {
+		h.writeError(w, http.StatusBadRequest, "items array required")
+		return
+	}
+	added := 0
+	for _, inp := range items {
+		if inp.Name == "" {
+			continue
+		}
+		if _, err := h.Store.AddPantryItem(inp); err == nil {
+			added++
+		}
+	}
+	h.writeJSON(w, http.StatusOK, map[string]int{"added": added})
+}
+
 func (h *Handler) DeletePantryItem(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {

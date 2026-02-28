@@ -50,6 +50,7 @@
       padding: .4rem .75rem; border-radius: var(--radius); cursor: pointer;
     }
     .add-row-btn:hover { background: var(--hover-soft); }
+    .add-row-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .image-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius); display: none; margin-top: .75rem; }
     .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem; }
     @media (max-width: 600px) {
@@ -66,7 +67,7 @@
     <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
     <nav class="header-nav">
       <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
-      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
     </nav>
   </div>
 </header>
@@ -126,7 +127,10 @@
     <div class="section-card">
       <h2>Ingredients <span style="color:var(--muted);font-weight:400;font-size:.8rem">(store amounts in metric)</span></h2>
       <div class="dynamic-list" id="ingredients-list"></div>
-      <button type="button" class="add-row-btn" id="add-ingredient">+ Add Ingredient</button>
+      <div class="add-row-actions">
+        <button type="button" class="add-row-btn" id="add-ingredient">+ Add Ingredient</button>
+        <button type="button" class="add-row-btn" id="add-from-pantry">🧺 From Pantry</button>
+      </div>
     </div>
 
     <!-- Steps -->
@@ -144,9 +148,28 @@
   </form>
 </main>
 
+<!-- Pantry picker modal -->
+<div id="pantry-picker-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Add from Pantry</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="pantry-picker-search">
+      <input type="search" id="pantry-picker-search" class="form-input" placeholder="Search pantry…" autocomplete="off">
+    </div>
+    <ul id="pantry-picker-list" class="pantry-picker-list"></ul>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="pantry-picker-confirm" class="btn btn-primary" disabled>Add 0 items</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container" class="toast-container"></div>
 
 <script src="/js/api.js"></script>
+<script src="/js/unit-list.js"></script>
 <script>
 (async () => {
   const isImport = new URLSearchParams(location.search).get('source') === 'import';
@@ -190,11 +213,7 @@
     row.innerHTML = `
       <input type="text" class="form-input" name="ing_name_${i}" placeholder="Ingredient name" list="${datalistId}" value="${escVal(data.name||'')}">
       <input type="number" class="form-input" name="ing_amount_${i}" placeholder="Amount" step="any" min="0" value="${data.amount||''}">
-      <select class="form-select" name="ing_unit_${i}">
-        <option value="">—</option>
-        ${['g','ml','cup','tsp','tbsp','°C','piece','pinch'].map(u =>
-          `<option value="${u}" ${data.unit===u?'selected':''}>${u}</option>`).join('')}
-      </select>
+      <select class="form-select" name="ing_unit_${i}"></select>
       <input type="text" class="form-input" name="ing_notes_${i}" placeholder="Notes (optional)" value="${escVal(data.notes||'')}">
       <button type="button" class="pantry-btn" title="Save to Pantry">🧺</button>
       <button type="button" class="remove-btn" onclick="this.parentElement.remove()" title="Remove">✕</button>`;
@@ -202,6 +221,7 @@
     const amountInput = row.querySelector('[name^=ing_amount]');
     const unitSelect  = row.querySelector('[name^=ing_unit]');
     const notesInput  = row.querySelector('[name^=ing_notes]');
+    unitList.populateSelect(unitSelect, data.unit || '');
 
     // Auto-fill from pantry when a known name is chosen
     nameInput.addEventListener('change', () => {
@@ -236,6 +256,92 @@
   }
 
   document.getElementById('add-ingredient').addEventListener('click', () => addIngredientRow());
+
+  // ── Pantry picker ─────────────────────────────────────────────────────────
+
+  const pickerModal   = document.getElementById('pantry-picker-modal');
+  const pickerList    = document.getElementById('pantry-picker-list');
+  const pickerSearch  = document.getElementById('pantry-picker-search');
+  const pickerConfirm = document.getElementById('pantry-picker-confirm');
+
+  function renderPickerList(query = '') {
+    const q = query.toLowerCase();
+    const filtered = pantryItems.filter(it =>
+      it.name.toLowerCase().includes(q) || (it.notes || '').toLowerCase().includes(q)
+    );
+
+    if (filtered.length === 0) {
+      pickerList.innerHTML = `<li class="pantry-picker-empty">${pantryItems.length === 0 ? 'Your pantry is empty.' : 'No results.'}</li>`;
+      return;
+    }
+
+    pickerList.innerHTML = '';
+    filtered.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'pantry-picker-item';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.dataset.name = item.name;
+      cb.addEventListener('change', updatePickerBtn);
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'pantry-picker-item-name';
+      nameEl.textContent = item.name;
+
+      li.appendChild(cb);
+      li.appendChild(nameEl);
+
+      const detail = [item.amount ? item.amount : null, item.unit || null].filter(Boolean).join(' ');
+      if (detail) {
+        const detailEl = document.createElement('span');
+        detailEl.className = 'pantry-picker-item-detail';
+        detailEl.textContent = detail;
+        li.appendChild(detailEl);
+      }
+
+      li.addEventListener('click', e => {
+        if (e.target !== cb) { cb.checked = !cb.checked; updatePickerBtn(); }
+      });
+
+      pickerList.appendChild(li);
+    });
+  }
+
+  function updatePickerBtn() {
+    const n = pickerList.querySelectorAll('input:checked').length;
+    pickerConfirm.textContent = `Add ${n} item${n === 1 ? '' : 's'}`;
+    pickerConfirm.disabled = n === 0;
+  }
+
+  document.getElementById('add-from-pantry').addEventListener('click', () => {
+    if (pantryItems.length === 0) { showToast('Pantry is empty'); return; }
+    pickerSearch.value = '';
+    renderPickerList();
+    updatePickerBtn();
+    pickerModal.classList.add('open');
+    pickerSearch.focus();
+  });
+
+  pickerSearch.addEventListener('input', e => renderPickerList(e.target.value));
+
+  pickerConfirm.addEventListener('click', () => {
+    pickerList.querySelectorAll('input:checked').forEach(cb => {
+      const item = pantryItems.find(it => it.name === cb.dataset.name);
+      if (item) addIngredientRow(item);
+    });
+    pickerModal.classList.remove('open');
+  });
+
+  pickerModal.querySelectorAll('.modal-close').forEach(btn =>
+    btn.addEventListener('click', () => pickerModal.classList.remove('open')));
+  pickerModal.addEventListener('click', e => {
+    if (e.target === pickerModal) pickerModal.classList.remove('open');
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && pickerModal.classList.contains('open'))
+      pickerModal.classList.remove('open');
+  });
 
   // ── Step rows ─────────────────────────────────────────────────────────────
 

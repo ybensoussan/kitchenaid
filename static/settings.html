@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — KitchenAid</title>
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/theme.js"></script>
+  <style>
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 1.5);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .settings-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .provider-option {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .provider-option:hover {
+      background: var(--hover-soft);
+    }
+    .provider-option.selected {
+      border-color: var(--brand);
+      background: var(--hover-soft);
+    }
+    .provider-radio {
+      width: 1.25rem;
+      height: 1.25rem;
+      accent-color: var(--brand);
+    }
+    .provider-info {
+      flex: 1;
+    }
+    .provider-name {
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .provider-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
+    <nav class="header-nav">
+      <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
+      <a href="/settings.html" class="btn btn-secondary active">⚙ Settings</a>
+      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
+    </nav>
+  </div>
+</header>
+
+<main class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Settings</h1>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="settings-title">AI Provider for Alternatives</h2>
+    <p style="margin-bottom: 1.25rem; font-size: 0.9rem; color: var(--muted);">
+      Choose which AI model to use when finding ingredient substitutes.
+    </p>
+
+    <div class="provider-list">
+      <div class="provider-group">
+        <label class="provider-option" data-provider="anthropic">
+          <input type="radio" name="ai_provider" value="anthropic" class="provider-radio">
+          <div class="provider-info">
+            <div class="provider-name">Anthropic (Claude)</div>
+            <div class="provider-desc">Great for culinary nuance and balanced substitutes.</div>
+          </div>
+        </label>
+        <div class="form-group" style="padding-left: 2.25rem;">
+          <label class="form-label" style="font-size: 0.8rem">Anthropic API Key</label>
+          <input type="password" id="anthropic-key" class="form-input" placeholder="sk-ant-...">
+        </div>
+      </div>
+
+      <div class="provider-group" style="margin-top: 1.5rem">
+        <label class="provider-option" data-provider="gemini">
+          <input type="radio" name="ai_provider" value="gemini" class="provider-radio">
+          <div class="provider-info">
+            <div class="provider-name">Google Gemini</div>
+            <div class="provider-desc">Fast and reliable suggestions.</div>
+          </div>
+        </label>
+        <div class="form-group" style="padding-left: 2.25rem;">
+          <label class="form-label" style="font-size: 0.8rem">Gemini API Key</label>
+          <input type="password" id="gemini-key" class="form-input" placeholder="AIza...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="settings-title">Model</h2>
+    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--muted);">
+      Select the model to use. Click <strong>Load Models</strong> after entering your API key to see available options.
+    </p>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <select id="model-select" class="form-select" style="flex:1">
+        <option value="">— default —</option>
+      </select>
+      <button id="load-models-btn" class="btn btn-secondary">Load Models</button>
+    </div>
+    <p id="model-status" style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;"></p>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="settings-title">Backup & Restore</h2>
+    <p style="margin-bottom: 1.25rem; font-size: 0.9rem; color: var(--muted);">
+      Export your entire recipe book and pantry as a database file, or restore from a backup.
+    </p>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <a href="/api/db/export" class="btn btn-secondary">💾 Export Database</a>
+      
+      <div style="position: relative;">
+        <button id="import-db-btn" class="btn btn-secondary">📂 Import Database</button>
+        <input type="file" id="import-db-input" accept=".db" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: flex-end;">
+    <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
+  </div>
+</main>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script>
+  // Simple toast helper
+  function showToast(msg, isError = false) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  (async () => {
+    const saveBtn = document.getElementById('save-settings-btn');
+    const options = document.querySelectorAll('.provider-option');
+    const antKeyInput = document.getElementById('anthropic-key');
+    const gemKeyInput = document.getElementById('gemini-key');
+    const modelSelect = document.getElementById('model-select');
+    const loadModelsBtn = document.getElementById('load-models-btn');
+    const modelStatus = document.getElementById('model-status');
+
+    let savedModel = '';
+
+    function updateSelection(selectedProvider) {
+      options.forEach(opt => {
+        const isMatch = opt.dataset.provider === selectedProvider;
+        opt.classList.toggle('selected', isMatch);
+        if (isMatch) opt.querySelector('input').checked = true;
+      });
+    }
+
+    function populateModelSelect(models, currentModel) {
+      modelSelect.innerHTML = '<option value="">— default —</option>';
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        if (m.id === currentModel) opt.selected = true;
+        modelSelect.appendChild(opt);
+      });
+    }
+
+    async function loadModels() {
+      loadModelsBtn.disabled = true;
+      modelStatus.textContent = 'Loading models…';
+      try {
+        const res = await fetch('/api/models');
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        populateModelSelect(json.data, savedModel);
+        modelStatus.textContent = `${json.data.length} model(s) available.`;
+      } catch (err) {
+        modelStatus.textContent = 'Failed: ' + err.message;
+      } finally {
+        loadModelsBtn.disabled = false;
+      }
+    }
+
+    // Load current settings
+    try {
+      const res = await fetch('/api/settings');
+      const json = await res.json();
+      if (json.data) {
+        if (json.data.ai_provider) updateSelection(json.data.ai_provider);
+        if (json.data.anthropic_api_key) antKeyInput.value = json.data.anthropic_api_key;
+        if (json.data.gemini_api_key) gemKeyInput.value = json.data.gemini_api_key;
+        if (json.data.model) {
+          savedModel = json.data.model;
+          const opt = document.createElement('option');
+          opt.value = savedModel;
+          opt.textContent = savedModel;
+          opt.selected = true;
+          modelSelect.appendChild(opt);
+        }
+      }
+    } catch (err) {
+      showToast('Failed to load settings', true);
+    }
+
+    // Handle selection clicks
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        updateSelection(opt.dataset.provider);
+      });
+    });
+
+    loadModelsBtn.addEventListener('click', loadModels);
+
+    // Handle save
+    saveBtn.addEventListener('click', async () => {
+      const selected = document.querySelector('input[name="ai_provider"]:checked').value;
+      const antKey = antKeyInput.value.trim();
+      const gemKey = gemKeyInput.value.trim();
+      const model  = modelSelect.value;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ai_provider: selected,
+            anthropic_api_key: antKey,
+            gemini_api_key: gemKey,
+            model,
+          })
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        savedModel = model;
+        showToast('Settings saved successfully');
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Settings';
+      }
+    });
+
+    // Handle DB Import
+    const importBtn = document.getElementById('import-db-btn');
+    const importInput = document.getElementById('import-db-input');
+
+    importBtn.addEventListener('click', () => importInput.click());
+
+    importInput.addEventListener('change', async () => {
+      const file = importInput.files[0];
+      if (!file) return;
+
+      if (!confirm('Importing a database will OVERWRITE your current recipes and pantry. Are you sure you want to continue?')) {
+        importInput.value = '';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('database', file);
+
+      importBtn.disabled = true;
+      importBtn.textContent = 'Importing...';
+
+      try {
+        const res = await fetch('/api/db/import', {
+          method: 'POST',
+          body: formData
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        
+        showToast('Database imported successfully. Reloading...');
+        setTimeout(() => window.location.reload(), 2000);
+      } catch (err) {
+        showToast('Import failed: ' + err.message, true);
+      } finally {
+        importBtn.disabled = false;
+        importBtn.textContent = '📂 Import Database';
+        importInput.value = '';
+      }
+    });
+  })();
+</script>
+</body>
+</html>

@@ -51,10 +51,12 @@ const editor = (() => {
     const form = document.getElementById('ingredient-form');
     form.reset();
 
+    // Populate unit select from shared unit list
+    unitList.populateSelect(form.querySelector('[name=unit]'), existing?.unit || '');
+
     if (existing) {
       form.querySelector('[name=name]').value   = existing.name;
       form.querySelector('[name=amount]').value = existing.amount;
-      form.querySelector('[name=unit]').value   = existing.unit;
       form.querySelector('[name=notes]').value  = existing.notes;
     }
 
@@ -77,6 +79,20 @@ const editor = (() => {
         showToast('Pantry save failed: ' + e.message, true);
       }
     });
+
+    const delBtn = document.getElementById('ingredient-delete-btn');
+    if (existing) {
+      delBtn.style.display = 'inline-flex';
+      const newDel = delBtn.cloneNode(true);
+      delBtn.replaceWith(newDel);
+      newDel.addEventListener('click', async () => {
+        if (await deleteIngredient(existing)) {
+          overlay.classList.remove('open');
+        }
+      });
+    } else {
+      delBtn.style.display = 'none';
+    }
 
     const saveBtn = document.getElementById('ingredient-save-btn');
     const newSave = saveBtn.cloneNode(true);
@@ -105,17 +121,21 @@ const editor = (() => {
       }
     });
 
-    overlay.querySelector('.modal-close').onclick = () => overlay.classList.remove('open');
+    overlay.querySelectorAll('.modal-close').forEach(btn => {
+      btn.onclick = () => overlay.classList.remove('open');
+    });
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
   }
 
   async function deleteIngredient(ing) {
-    if (!confirm(`Delete "${ing.name}"?`)) return;
+    if (!confirm(`Delete "${ing.name}"?`)) return false;
     try {
       await api.deleteIngredient(recipeId, ing.id);
       if (onIngredientChange) onIngredientChange();
+      return true;
     } catch (e) {
       showToast('Delete failed: ' + e.message, true);
+      return false;
     }
   }
 
@@ -146,10 +166,26 @@ const editor = (() => {
     });
   }
 
-  async function deleteStep(step) {
+  async function deleteStep(step, allSteps) {
     if (!confirm(`Delete step ${step.step_number}?`)) return;
     try {
       await api.deleteStep(recipeId, step.id);
+      
+      // Renumber remaining steps
+      const remaining = allSteps.filter(s => s.id !== step.id)
+        .sort((a, b) => a.step_number - b.step_number);
+      
+      for (let i = 0; i < remaining.length; i++) {
+        const newNum = i + 1;
+        if (remaining[i].step_number !== newNum) {
+          await api.updateStep(recipeId, remaining[i].id, {
+            step_number: newNum,
+            instruction: remaining[i].instruction,
+            duration: remaining[i].duration
+          });
+        }
+      }
+
       if (onStepChange) onStepChange();
     } catch (e) {
       showToast('Delete failed: ' + e.message, true);

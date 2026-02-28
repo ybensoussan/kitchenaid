@@ -32,13 +32,43 @@ func (h *Handler) FindAlternatives(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		h.writeError(w, http.StatusServiceUnavailable, "ANTHROPIC_API_KEY not configured")
+	settings, err := h.Store.GetSettings()
+	if err != nil {
+		h.writeError(w, http.StatusInternalServerError, "failed to get settings")
 		return
 	}
 
-	alts, err := fetchAlternatives(apiKey, req)
+	var alts []Alternative
+	if settings.AIProvider == "gemini" {
+		apiKey := settings.GeminiAPIKey
+		if apiKey == "" {
+			apiKey = os.Getenv("GEMINI_API_KEY")
+		}
+		if apiKey == "" {
+			h.writeError(w, http.StatusServiceUnavailable, "GEMINI_API_KEY not configured")
+			return
+		}
+		model := settings.Model
+		if model == "" {
+			model = "gemini-2.5-flash"
+		}
+		alts, err = fetchGeminiAlternatives(apiKey, model, req)
+	} else {
+		apiKey := settings.AnthropicAPIKey
+		if apiKey == "" {
+			apiKey = os.Getenv("ANTHROPIC_API_KEY")
+		}
+		if apiKey == "" {
+			h.writeError(w, http.StatusServiceUnavailable, "ANTHROPIC_API_KEY not configured")
+			return
+		}
+		model := settings.Model
+		if model == "" {
+			model = "claude-haiku-4-5-20251001"
+		}
+		alts, err = fetchAnthropicAlternatives(apiKey, model, req)
+	}
+
 	if err != nil {
 		h.writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -47,8 +77,7 @@ func (h *Handler) FindAlternatives(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, map[string]interface{}{"alternatives": alts})
 }
 
-func fetchAlternatives(apiKey string, req alternativesReq) ([]Alternative, error) {
-	// Build ingredient description
+func getPrompt(req alternativesReq) string {
 	desc := req.Name
 	if req.Amount > 0 && req.Unit != "" {
 		desc = fmt.Sprintf("%.4g %s %s", req.Amount, req.Unit, req.Name)
@@ -59,13 +88,16 @@ func fetchAlternatives(apiKey string, req alternativesReq) ([]Alternative, error
 		desc += " (" + req.Notes + ")"
 	}
 
-	prompt := fmt.Sprintf(`A recipe calls for: %s.
+	return fmt.Sprintf(`A recipe calls for: %s.
 Suggest 4 practical substitutes. Reply with a JSON array only — no prose, no markdown fences:
 [{"name":"...","amount":number_or_0,"unit":"...","notes":"...","tip":"one-sentence tip"},...]
 Match the unit system of the original. Use 0 for amount when quantity does not apply.`, desc)
+}
 
+func fetchAnthropicAlternatives(apiKey, model string, req alternativesReq) ([]Alternative, error) {
+	prompt := getPrompt(req)
 	body, _ := json.Marshal(map[string]interface{}{
-		"model":      "claude-haiku-4-5-20251001",
+		"model":      model,
 		"max_tokens": 600,
 		"messages":   []map[string]string{{"role": "user", "content": prompt}},
 	})
@@ -93,7 +125,54 @@ Match the unit system of the original. Use 0 for amount when quantity does not a
 		return nil, fmt.Errorf("unexpected API response")
 	}
 
-	text := claude.Content[0].Text
+	return parseJsonArray(claude.Content[0].Text)
+}
+
+func fetchGeminiAlternatives(apiKey, model string, req alternativesReq) ([]Alternative, error) {
+	prompt := getPrompt(req)
+	url := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]string{
+					{"text": prompt},
+				},
+			},
+		},
+		"generationConfig": map[string]interface{}{
+			"response_mime_type": "application/json",
+		},
+	})
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("Gemini API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Gemini API error %d: %s", resp.StatusCode, string(raw))
+	}
+
+	var gemini struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&gemini); err != nil || len(gemini.Candidates) == 0 {
+		return nil, fmt.Errorf("unexpected Gemini response")
+	}
+
+	return parseJsonArray(gemini.Candidates[0].Content.Parts[0].Text)
+}
+
+func parseJsonArray(text string) ([]Alternative, error) {
 	start := strings.Index(text, "[")
 	end := strings.LastIndex(text, "]")
 	if start < 0 || end <= start {

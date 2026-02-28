@@ -25,6 +25,7 @@ func main() {
 	h := &handlers.Handler{
 		Store:      store,
 		UploadsDir: cfg.UploadsDir,
+		DBPath:     cfg.DBPath,
 	}
 
 	mux := http.NewServeMux()
@@ -50,10 +51,25 @@ func main() {
 	mux.HandleFunc("POST /api/import/url", h.ImportURL)
 	mux.HandleFunc("POST /api/import/html", h.ImportHTML)
 
-	mux.HandleFunc("POST /api/alternatives",   h.FindAlternatives)
+	mux.HandleFunc("GET /api/images/search",  h.SearchImages)
+	mux.HandleFunc("POST /api/alternatives", h.FindAlternatives)
 
-	mux.HandleFunc("GET /api/pantry",         h.ListPantryItems)
-	mux.HandleFunc("POST /api/pantry",        h.CreatePantryItem)
+	mux.HandleFunc("GET /api/tags",               h.ListAllTags)
+	mux.HandleFunc("POST /api/recipes/{id}/tags", h.AddRecipeTag)
+	mux.HandleFunc("DELETE /api/recipes/{id}/tags/{name}", h.RemoveRecipeTag)
+	mux.HandleFunc("POST /api/recipes/{id}/tags/suggest", h.SuggestTags)
+
+	mux.HandleFunc("GET /api/models",        h.GetModels)
+
+	mux.HandleFunc("GET /api/settings",      h.GetSettings)
+	mux.HandleFunc("PUT /api/settings",      h.UpdateSettings)
+
+	mux.HandleFunc("GET /api/db/export",     h.ExportDB)
+	mux.HandleFunc("POST /api/db/import",    h.ImportDB)
+
+	mux.HandleFunc("GET /api/pantry",          h.ListPantryItems)
+	mux.HandleFunc("POST /api/pantry",         h.CreatePantryItem)
+	mux.HandleFunc("POST /api/pantry/batch",   h.BatchAddPantryItems)
 	mux.HandleFunc("PUT /api/pantry/{id}",    h.UpdatePantryItem)
 	mux.HandleFunc("DELETE /api/pantry/{id}", h.DeletePantryItem)
 

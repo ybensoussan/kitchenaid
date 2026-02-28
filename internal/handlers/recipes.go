@@ -7,7 +7,8 @@ import (
 )
 
 func (h *Handler) ListRecipes(w http.ResponseWriter, r *http.Request) {
-	recipes, err := h.Store.ListRecipes()
+	tagFilter := r.URL.Query().Get("tag")
+	recipes, err := h.Store.ListRecipes(tagFilter)
 	if err != nil {
 		h.writeError(w, http.StatusInternalServerError, err.Error())
 		return

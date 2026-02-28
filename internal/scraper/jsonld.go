@@ -76,7 +76,18 @@ var unitConversions = map[string]struct {
 	"pinches":{1, "pinch"},
 	"dash":   {1, "pinch"},
 	"dashes": {1, "pinch"},
-	"":       {1, ""},
+	// small volume passthrough (don't convert to ml by default to keep culinary meaning)
+	"tsp":         {1, "tsp"},
+	"tsp.":        {1, "tsp"},
+	"teaspoon":    {1, "tsp"},
+	"teaspoons":   {1, "tsp"},
+	"tbsp":        {1, "tbsp"},
+	"tbsp.":       {1, "tbsp"},
+	"tablespoon":  {1, "tbsp"},
+	"tablespoons": {1, "tbsp"},
+	"cup":         {1, "cup"},
+	"cups":        {1, "cup"},
+	"":            {1, ""},
 }
 
 // prepMethods are preparation words that describe technique, not the ingredient itself.
@@ -108,7 +119,7 @@ var priceRe = regexp.MustCompile(`\s*\(\s*\$[\d.,\s]+\*{0,3}\)\s*|\s*\$[\d.]+\*{
 var parenSizeRe = regexp.MustCompile(`^\s*\(\s*(?:about\s+|approximately\s+)?[\d./½¼¾⅓⅔⅛⅜⅝⅞]+\s*[a-zA-Z .]+\)\s*`)
 
 // joinedNumUnitRe matches a number glued to a unit with no space, e.g. "200g", "1.5kg", "250ml"
-var joinedNumUnitRe = regexp.MustCompile(`^(\d+(?:\.\d+)?)(g|ml|kg|mg|l|oz|lb|lbs)(\b|$)`)
+var joinedNumUnitRe = regexp.MustCompile(`^(\d+(?:\.\d+)?)(g|ml|kg|mg|l|oz|lb|lbs|tsp|tbsp)(\b|$)`)
 
 var fractionRe = regexp.MustCompile(`^(\d+)\s*/\s*(\d+)$`)
 var numberRe = regexp.MustCompile(`^(\d+(?:\.\d+)?)\s*(\d+\s*/\s*\d+)?`)
@@ -258,15 +269,8 @@ func extractUnitWord(s string) (unit, rest string) {
 		return "", s
 	}
 	candidate := strings.ToLower(parts[0])
-	// Recognised units: anything in the conversion table, plus pass-through units.
-	_, inConversions := unitConversions[candidate]
-	passThrough := map[string]bool{
-		"tsp": true, "tbsp": true,
-		"cup": true, "cups": true,
-		"tablespoon": true, "tablespoons": true,
-		"teaspoon": true, "teaspoons": true,
-	}
-	if (inConversions || passThrough[candidate]) && candidate != "" {
+	// Recognized units: anything in the conversion table.
+	if _, ok := unitConversions[candidate]; ok && candidate != "" {
 		return parts[0], strings.TrimSpace(strings.Join(parts[1:], " "))
 	}
 	return "", s

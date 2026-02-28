@@ -16,10 +16,11 @@
     <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
     <nav class="header-nav">
       <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
+      <a href="/settings.html" class="btn btn-secondary">⚙ Settings</a>
       <button id="cook-btn" class="btn btn-primary">▶ Cook</button>
       <button id="edit-toggle-btn" class="btn btn-secondary">✏ Edit Recipe</button>
       <button id="delete-btn" class="btn btn-ghost" style="color:#dc2626" title="Delete recipe">🗑 Delete</button>
-      <button id="theme-toggle-btn" class="btn btn-ghost btn-icon" title="Toggle dark mode">🌙</button>
+      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
     </nav>
   </div>
 </header>
@@ -63,6 +64,8 @@
           <div class="ingredients-card-header">
             <h2 class="section-title" style="margin:0">Ingredients</h2>
 
+            <button id="add-to-pantry-btn" class="btn btn-secondary btn-sm" title="Add ingredients to pantry">🧺 Add to Pantry</button>
+
             <!-- Units toggle -->
             <div class="units-toggle">
               <button class="unit-btn" data-system="metric">Metric</button>
@@ -84,13 +87,50 @@
 
           <div class="ingredients-list" id="ingredients-list"></div>
 
-          <button id="add-ingredient-btn" class="ingredients-add-btn">+ Add Ingredient</button>
+          <div class="ingredients-add-row">
+            <button id="add-ingredient-btn" class="ingredients-add-btn">+ Add Ingredient</button>
+            <button id="from-pantry-btn" class="ingredients-add-btn">🧺 From Pantry</button>
+          </div>
         </div>
       </div>
     </aside>
   </div>
 
 </main>
+
+<!-- Pantry picker modal (add from pantry) -->
+<div id="pantry-picker-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Add from Pantry</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="pantry-picker-search">
+      <input type="search" id="pantry-picker-search" class="form-input" placeholder="Search pantry…" autocomplete="off">
+    </div>
+    <ul id="pantry-picker-list" class="pantry-picker-list"></ul>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="pantry-picker-confirm" class="btn btn-primary" disabled>Add 0 items</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pantry review modal -->
+<div id="pantry-review-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Add to Pantry</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <p class="pantry-review-hint">Uncheck items already in your pantry or items you don't want to add.</p>
+    <ul class="pantry-review-list" id="pantry-review-list"></ul>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="pantry-review-confirm" class="btn btn-primary" disabled>Add 0 items</button>
+    </div>
+  </div>
+</div>
 
 <!-- Ingredient edit modal -->
 <div id="ingredient-modal" class="modal-overlay" role="dialog" aria-modal="true">
@@ -111,17 +151,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Unit</label>
-          <select name="unit" class="form-select">
-            <option value="">— none —</option>
-            <option value="g">g</option>
-            <option value="ml">ml</option>
-            <option value="cup">cup</option>
-            <option value="tsp">tsp</option>
-            <option value="tbsp">tbsp</option>
-            <option value="°C">°C</option>
-            <option value="piece">piece</option>
-            <option value="pinch">pinch</option>
-          </select>
+          <select name="unit" class="form-select"></select>
         </div>
       </div>
       <div class="form-group">
@@ -131,6 +161,8 @@
     </form>
     <div class="modal-footer">
       <button id="ingredient-pantry-btn" type="button" class="btn btn-ghost">🧺 Save to Pantry</button>
+      <div style="flex:1"></div>
+      <button id="ingredient-delete-btn" type="button" class="btn btn-ghost" style="color:#dc2626; display:none">🗑 Remove</button>
       <button type="button" class="btn btn-secondary modal-close">Cancel</button>
       <button id="ingredient-save-btn" class="btn btn-primary">Save</button>
     </div>
@@ -145,6 +177,36 @@
       <button class="modal-close" aria-label="Close">&times;</button>
     </div>
     <div id="alternatives-body"></div>
+  </div>
+</div>
+
+<!-- Tag picker modal -->
+<div id="tag-picker-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Add Tag</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="tag-picker-input-row">
+      <input type="text" id="tag-picker-input" class="form-input" placeholder="Type to search or create…" autocomplete="off" maxlength="50">
+      <button id="tag-picker-create" class="btn btn-primary" disabled>Add</button>
+    </div>
+    <div id="tag-picker-existing" class="tag-picker-existing"></div>
+  </div>
+</div>
+
+<!-- Image search modal -->
+<div id="image-search-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal" style="width: min(800px, 92vw)">
+    <div class="modal-header">
+      <h2 class="modal-title">Select Recipe Image</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="image-search-input-row">
+      <input type="search" id="image-search-input" class="form-input" placeholder="Search…" autocomplete="off">
+      <button id="image-search-go" class="btn btn-primary">Search</button>
+    </div>
+    <div id="image-search-body" class="image-search-body-scroll"></div>
   </div>
 </div>
 
@@ -170,15 +232,24 @@
       <p class="cook-panel-label">Steps</p>
       <ol class="cook-steps-list" id="cook-steps-list"></ol>
     </main>
+    <aside class="cook-timers-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <p class="cook-panel-label" style="margin: 0;">Timers</p>
+        <button id="add-timer-btn" class="btn btn-secondary btn-sm" title="Add Timer">+</button>
+      </div>
+      <div id="cook-timers-list" class="cook-timers-list"></div>
+    </aside>
   </div>
 </div>
 
 <div id="toast-container" class="toast-container"></div>
 
 <script src="/js/api.js"></script>
+<script src="/js/unit-list.js"></script>
 <script src="/js/units.js"></script>
 <script src="/js/scaling.js"></script>
 <script src="/js/editor.js"></script>
 <script src="/js/recipe.js"></script>
+<script src="/js/pantry-review.js"></script>
 </body>
 </html>

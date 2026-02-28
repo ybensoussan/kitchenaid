@@ -9,11 +9,8 @@
 
   function applyTheme() {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const btn = document.getElementById('theme-toggle-btn');
-    if (btn) {
-      btn.textContent = dark ? '☀' : '🌙';
-      btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
-    }
+    const cb = document.getElementById('theme-toggle-btn');
+    if (cb) cb.checked = dark;
   }
 
   function toggle() {
@@ -31,6 +28,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     applyTheme();
     document.getElementById('theme-toggle-btn')
-      ?.addEventListener('click', toggle);
+      ?.addEventListener('change', toggle);
   });
 })();

@@ -26,6 +26,9 @@ func main() {
 		`1 (15 oz) can chickpeas, drained and rinsed`,
 		`200g cream cheese, softened`,
 		`1 lb chicken breast, boneless and skinless`,
+		`1 tablespoon olive oil`,
+		`2 teaspoons dried oregano`,
+		`100tbsp of something`,
 	}
 	fmt.Printf("%-52s  %7s  %-8s  %-22s  %s\n", "INPUT", "AMOUNT", "UNIT", "NAME", "NOTES")
 	fmt.Println(fmt.Sprintf("%s", "────────────────────────────────────────────────────────────────────────────────────────────────────────"))

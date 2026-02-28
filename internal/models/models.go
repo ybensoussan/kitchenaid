@@ -15,6 +15,11 @@ type Recipe struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 	Ingredients  []Ingredient `json:"ingredients,omitempty"`
 	Steps        []Step       `json:"steps,omitempty"`
+	Tags         []string     `json:"tags,omitempty"`
+}
+
+type TagSuggestionResponse struct {
+	Tags []string `json:"tags"`
 }
 
 type Ingredient struct {
@@ -99,6 +104,13 @@ type PantryItemInput struct {
 
 type UploadResponse struct {
 	URL string `json:"url"`
+}
+
+type Settings struct {
+	AIProvider       string `json:"ai_provider"` // "anthropic" or "gemini"
+	AnthropicAPIKey  string `json:"anthropic_api_key"`
+	GeminiAPIKey     string `json:"gemini_api_key"`
+	Model            string `json:"model"`
 }
 
 type APIResponse struct {
