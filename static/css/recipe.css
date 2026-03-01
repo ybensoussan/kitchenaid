@@ -73,6 +73,18 @@
   margin-bottom: 1.25rem;
   max-width: 68ch;
 }
+/* Hide the empty placeholder when not in edit mode */
+.recipe-description--empty { display: none; }
+.edit-mode .recipe-description--empty {
+  display: block;
+  min-height: 1.4em;
+}
+.edit-mode .recipe-description--empty:empty::before {
+  content: 'Add a description…';
+  color: var(--muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
 .recipe-meta-row {
   display: flex;
   flex-wrap: wrap;

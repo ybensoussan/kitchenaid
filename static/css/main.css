@@ -102,7 +102,7 @@ body {
 .btn-danger:hover { background: #b91c1c; }
 
 .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
-.btn-icon { padding: 0.4rem; border-radius: 6px; }
+.btn-icon { padding: 0.45rem; border-radius: 6px; }
 
 /* ── Dropdown ── */
 .dropdown {
@@ -518,7 +518,4 @@ body.edit-mode .edit-mode-only { display: block !important; }
 }
 @media (max-width: 500px) {
   .site-logo { font-size: 1.1rem; }
-  .btn-label { display: none; }
-  /* Tighten horizontal padding so icon-only buttons stay compact */
-  .header-nav .btn { padding-left: 0.55rem; padding-right: 0.55rem; }
 }

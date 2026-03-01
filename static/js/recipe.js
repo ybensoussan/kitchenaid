@@ -84,9 +84,7 @@
           </div>
         </div>
 
-        ${recipe.description
-          ? `<p class="recipe-description" id="editable-desc">${escHtml(recipe.description)}</p>`
-          : ''}
+        <p class="recipe-description${recipe.description ? '' : ' recipe-description--empty'}" id="editable-desc">${recipe.description ? escHtml(recipe.description) : ''}</p>
         <div class="recipe-meta-row">
           <div class="recipe-meta-item">
             <span class="recipe-meta-label">Prep</span>
@@ -114,6 +112,23 @@
       </div>`;
 
     document.getElementById('hero-image-search-btn')?.addEventListener('click', openImageSearch);
+
+    // Wire editable fields — must be re-done each time renderHero replaces the DOM
+    const _titleEl = document.getElementById('editable-title');
+    const _descEl  = document.getElementById('editable-desc');
+    const _prepEl  = document.getElementById('editable-prep');
+    const _cookEl  = document.getElementById('editable-cook');
+    if (_titleEl) editor.makeEditable(_titleEl, 'title');
+    if (_descEl)  {
+      editor.makeEditable(_descEl, 'description');
+      _descEl.addEventListener('blur', () => {
+        const v = _descEl.textContent.trim();
+        recipe.description = v;
+        _descEl.classList.toggle('recipe-description--empty', !v);
+      });
+    }
+    if (_prepEl) editor.makeEditable(_prepEl, 'prep_time', v => parseInt(v, 10) || 0);
+    if (_cookEl) editor.makeEditable(_cookEl, 'cook_time', v => parseInt(v, 10) || 0);
 
     // Tag events
     document.getElementById('suggest-tags-btn')?.addEventListener('click', async () => {
@@ -401,29 +416,19 @@
   renderIngredients();
   renderSteps();
 
-  // ── Wire hero editable fields ─────────────────────────────────────────────
-
-  const titleEl = document.getElementById('editable-title');
-  const descEl  = document.getElementById('editable-desc');
-  const prepEl  = document.getElementById('editable-prep');
-  const cookEl  = document.getElementById('editable-cook');
-
-  editor.makeEditable(titleEl, 'title');
-  if (descEl) editor.makeEditable(descEl, 'description');
-  if (prepEl) editor.makeEditable(prepEl, 'prep_time', v => parseInt(v, 10) || 0);
-  if (cookEl) editor.makeEditable(cookEl, 'cook_time', v => parseInt(v, 10) || 0);
-
   // ── Edit mode toggle ──────────────────────────────────────────────────────
 
   const editBtn = document.getElementById('edit-toggle-btn');
   editBtn?.addEventListener('click', () => {
     const active = editor.toggle();
     if (active) {
-      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 11"/></svg><span class="btn-label"> Done Editing</span>`;
-      editBtn.className = 'btn btn-primary';
+      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 11"/></svg>`;
+      editBtn.className = 'btn btn-primary btn-icon';
+      editBtn.title = 'Done Editing';
     } else {
-      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="btn-label"> Edit Recipe</span>`;
-      editBtn.className = 'btn btn-secondary';
+      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+      editBtn.className = 'btn btn-secondary btn-icon';
+      editBtn.title = 'Edit Recipe';
     }
   });
 
