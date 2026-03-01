@@ -33,6 +33,7 @@ func main() {
 	// API routes
 	mux.HandleFunc("GET /api/recipes", h.ListRecipes)
 	mux.HandleFunc("POST /api/recipes", h.CreateRecipe)
+	mux.HandleFunc("PUT /api/recipes/reorder", h.ReorderRecipes)
 	mux.HandleFunc("GET /api/recipes/{id}", h.GetRecipe)
 	mux.HandleFunc("PUT /api/recipes/{id}", h.UpdateRecipe)
 	mux.HandleFunc("PATCH /api/recipes/{id}", h.PatchRecipe)
@@ -50,6 +51,8 @@ func main() {
 	mux.HandleFunc("POST /api/upload", h.Upload)
 	mux.HandleFunc("POST /api/import/url", h.ImportURL)
 	mux.HandleFunc("POST /api/import/html", h.ImportHTML)
+	mux.HandleFunc("POST /api/import/text", h.ImportText)
+	mux.HandleFunc("POST /api/import/image", h.ImportImage)
 
 	mux.HandleFunc("GET /api/images/search",  h.SearchImages)
 	mux.HandleFunc("POST /api/alternatives", h.FindAlternatives)
@@ -63,6 +66,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/settings",      h.GetSettings)
 	mux.HandleFunc("PUT /api/settings",      h.UpdateSettings)
+
+	mux.HandleFunc("GET /api/recipes/{id}/export", h.ExportRecipe)
 
 	mux.HandleFunc("GET /api/db/export",     h.ExportDB)
 	mux.HandleFunc("POST /api/db/import",    h.ImportDB)

@@ -15,11 +15,28 @@
   <div class="header-inner">
     <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
     <nav class="header-nav">
-      <a href="/pantry.html" class="btn btn-secondary">🧺 Pantry</a>
-      <a href="/settings.html" class="btn btn-secondary">⚙ Settings</a>
-      <button id="cook-btn" class="btn btn-primary">▶ Cook</button>
-      <button id="edit-toggle-btn" class="btn btn-secondary">✏ Edit Recipe</button>
-      <button id="delete-btn" class="btn btn-ghost" style="color:#dc2626" title="Delete recipe">🗑 Delete</button>
+      <a href="/pantry.html" class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg><span class="btn-label"> Pantry</span></a>
+      <button id="cook-btn" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg><span class="btn-label"> Cook</span></button>
+      <button id="edit-toggle-btn" class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="btn-label"> Edit Recipe</span></button>
+      <button id="print-btn" class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span class="btn-label"> Print</span></button>
+      <button id="fav-btn" class="btn btn-secondary" title="Favorite"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+      <div class="dropdown" id="recipe-overflow-dropdown">
+        <button class="btn btn-secondary btn-icon" id="recipe-overflow-btn" title="More options" aria-label="More options">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <div class="dropdown-menu">
+          <a id="export-json-link" class="dropdown-item" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Export .json
+          </a>
+          <a id="export-html-link" class="dropdown-item" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Shareable HTML
+          </a>
+        </div>
+      </div>
+      <button id="delete-btn" class="btn btn-ghost" style="color:#dc2626" title="Delete recipe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg><span class="btn-label"> Delete</span></button>
+      <a href="/settings.html" class="btn btn-secondary" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
       <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
     </nav>
   </div>
@@ -27,7 +44,7 @@
 
 <main class="page-container" id="content">
 
-  <a href="/" class="back-link">← All Recipes</a>
+  <a href="/" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All Recipes</a>
 
   <!-- Two-column layout from top -->
   <div class="recipe-layout">
@@ -40,7 +57,7 @@
 
       <!-- Recipe toolbar (edit-mode controls) -->
       <div class="recipe-toolbar edit-controls">
-        <button id="add-step-btn" class="btn btn-secondary btn-sm">+ Add Step</button>
+        <button id="add-step-btn" class="btn btn-secondary btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Step</button>
       </div>
 
       <section class="steps-column">
@@ -54,7 +71,7 @@
       <div class="recipe-photo-wrap">
         <div id="recipe-photo"></div>
         <label id="photo-upload-label" class="photo-upload-overlay" title="Change photo">
-          📷 Change photo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Change photo
           <input type="file" id="photo-upload-input" accept="image/jpeg,image/png,image/webp" style="display:none">
         </label>
       </div>
@@ -64,7 +81,7 @@
           <div class="ingredients-card-header">
             <h2 class="section-title" style="margin:0">Ingredients</h2>
 
-            <button id="add-to-pantry-btn" class="btn btn-secondary btn-sm" title="Add ingredients to pantry">🧺 Add to Pantry</button>
+            <button id="add-to-pantry-btn" class="btn btn-secondary btn-sm" title="Add ingredients to pantry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Add to Pantry</button>
 
             <!-- Units toggle -->
             <div class="units-toggle">
@@ -88,8 +105,8 @@
           <div class="ingredients-list" id="ingredients-list"></div>
 
           <div class="ingredients-add-row">
-            <button id="add-ingredient-btn" class="ingredients-add-btn">+ Add Ingredient</button>
-            <button id="from-pantry-btn" class="ingredients-add-btn">🧺 From Pantry</button>
+            <button id="add-ingredient-btn" class="ingredients-add-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Ingredient</button>
+            <button id="from-pantry-btn" class="ingredients-add-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> From Pantry</button>
           </div>
         </div>
       </div>
@@ -103,7 +120,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title">Add from Pantry</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="pantry-picker-search">
       <input type="search" id="pantry-picker-search" class="form-input" placeholder="Search pantry…" autocomplete="off">
@@ -121,7 +138,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title">Add to Pantry</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <p class="pantry-review-hint">Uncheck items already in your pantry or items you don't want to add.</p>
     <ul class="pantry-review-list" id="pantry-review-list"></ul>
@@ -137,7 +154,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title">Edit Ingredient</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <form id="ingredient-form">
       <div class="form-group">
@@ -160,9 +177,9 @@
       </div>
     </form>
     <div class="modal-footer">
-      <button id="ingredient-pantry-btn" type="button" class="btn btn-ghost">🧺 Save to Pantry</button>
+      <button id="ingredient-pantry-btn" type="button" class="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Save to Pantry</button>
       <div style="flex:1"></div>
-      <button id="ingredient-delete-btn" type="button" class="btn btn-ghost" style="color:#dc2626; display:none">🗑 Remove</button>
+      <button id="ingredient-delete-btn" type="button" class="btn btn-ghost" style="color:#dc2626; display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Remove</button>
       <button type="button" class="btn btn-secondary modal-close">Cancel</button>
       <button id="ingredient-save-btn" class="btn btn-primary">Save</button>
     </div>
@@ -174,7 +191,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title">Alternatives for <span id="alt-ing-name" style="color:var(--brand)"></span></h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div id="alternatives-body"></div>
   </div>
@@ -185,7 +202,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title">Add Tag</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="tag-picker-input-row">
       <input type="text" id="tag-picker-input" class="form-input" placeholder="Type to search or create…" autocomplete="off" maxlength="50">
@@ -200,7 +217,7 @@
   <div class="modal" style="width: min(800px, 92vw)">
     <div class="modal-header">
       <h2 class="modal-title">Select Recipe Image</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="image-search-input-row">
       <input type="search" id="image-search-input" class="form-input" placeholder="Search…" autocomplete="off">
@@ -220,7 +237,7 @@
         <button class="cook-unit-btn" data-system="metric">Metric</button>
         <button class="cook-unit-btn" data-system="imperial">Imperial</button>
       </div>
-      <button class="cook-exit-btn" id="cook-exit-btn">✕ Exit</button>
+      <button class="cook-exit-btn" id="cook-exit-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Exit</button>
     </div>
   </div>
   <div class="cook-body">
@@ -235,7 +252,7 @@
     <aside class="cook-timers-panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <p class="cook-panel-label" style="margin: 0;">Timers</p>
-        <button id="add-timer-btn" class="btn btn-secondary btn-sm" title="Add Timer">+</button>
+        <button id="add-timer-btn" class="btn btn-secondary btn-sm" title="Add Timer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
       <div id="cook-timers-list" class="cook-timers-list"></div>
     </aside>

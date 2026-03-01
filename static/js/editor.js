@@ -27,14 +27,23 @@ const editor = (() => {
 
   function makeEditable(el, field, transform) {
     el.setAttribute('contenteditable', 'true');
-    el.addEventListener('blur', async () => {
+    el.addEventListener('blur', () => {
       let value = el.textContent.trim();
       if (transform) value = transform(value);
-      try {
-        await api.patchRecipe(recipeId, field, value);
-      } catch (e) {
-        showToast('Save failed: ' + e.message, true);
-      }
+      // keepalive ensures the request survives navigation (e.g. clicking "All Recipes"
+      // immediately after editing fires blur, but the page unloads before the fetch
+      // normally completes — this is why tagless recipes looked stale on the grid).
+      fetch(`/api/recipes/${recipeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field, value }),
+        keepalive: true,
+      }).then(async res => {
+        const json = await res.json();
+        if (json.error) showToast('Save failed: ' + json.error, true);
+      }).catch(() => {
+        // Silently ignore — page may have already navigated away
+      });
     });
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {

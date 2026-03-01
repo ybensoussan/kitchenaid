@@ -412,16 +412,180 @@ body.edit-mode .ingredients-add-row { display: flex; }
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .recipe-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
   }
-  .recipe-sidebar {
-    position: static;
-    max-height: none;
-  }
+  /* Flatten recipe-main so its children can be ordered independently */
+  .recipe-main    { display: contents; }
+  #hero           { order: 1; }
+  .recipe-sidebar { order: 2; position: static; max-height: none; width: 100%; }
+  .recipe-toolbar { order: 3; }
+  .steps-column   { order: 4; }
   .recipe-title { font-size: 1.5rem; }
 }
 
-/* ── Ingredient alternatives ── */
+/* ── Print ── */
+@media print {
+  @page { margin: 0.5in; size: portrait; }
+  
+  /* Hide all UI clutter */
+  .site-header, .back-link, .recipe-toolbar, .recipe-external-links,
+  .photo-upload-overlay, .ingredients-add-row, .modal-overlay,
+  .tag-del-btn, .edit-controls, #suggest-tags-btn, #add-tag-btn,
+  .recipe-hero-image-placeholder-link, .placeholder-search-hint,
+  .unit-btn, .units-toggle, .servings-control, .ingredients-add-btn,
+  .ingredients-add-row, .step-actions, .step-delete-btn, .ing-alt-btn,
+  .header-nav, .btn, .card-tags, .recipe-tags-container, .cook-check-box {
+    display: none !important;
+  }
+
+  /* Reset basics */
+  body { 
+    background: white !important; 
+    color: #111 !important; 
+    font-family: Georgia, serif !important; 
+    font-size: 10pt !important; 
+    line-height: 1.4 !important;
+  }
+  .page-container { padding: 0 !important; max-width: none !important; margin: 0 !important; }
+  
+  /* Main Layout Grid */
+  .recipe-layout {
+    display: grid !important;
+    grid-template-columns: 32% 1fr !important;
+    gap: 1.25rem !important;
+    position: relative !important;
+    padding-top: 130px !important; /* Reserve space for header */
+    margin-top: 0 !important;
+  }
+
+  /* Header Area (Title, Meta, Desc) - Extracted from flow */
+  #hero {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: calc(100% - 170px) !important; /* Leave room for image */
+    height: auto !important;
+    padding-bottom: 0.6rem !important;
+    border-bottom: 2px solid #000 !important;
+  }
+  .recipe-hero-body { padding: 0 !important; }
+  .recipe-title {
+    font-size: 18pt !important;
+    font-family: "Helvetica Neue", sans-serif !important;
+    color: #000 !important;
+    margin: 0 0 0.25rem 0 !important;
+    line-height: 1.1 !important;
+  }
+  .recipe-description {
+    font-style: italic;
+    color: #444 !important;
+    margin-bottom: 0.4rem !important;
+    font-size: 9pt !important;
+  }
+  .recipe-meta-row {
+    display: flex !important;
+    gap: 1.5rem !important;
+    margin-top: 0 !important;
+    font-family: "Helvetica Neue", sans-serif !important;
+    font-size: 9pt !important;
+    color: #555 !important;
+  }
+  .recipe-meta-label { font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 7pt !important; }
+  .recipe-meta-value { font-weight: normal; color: #000 !important; font-size: 9pt !important; }
+
+  /* Photo - Extracted from sidebar */
+  .recipe-photo-wrap {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 150px !important;
+    height: 112px !important;
+    border: 1px solid #ddd !important;
+    margin: 0 !important;
+    z-index: 5;
+    border-radius: 6px !important;
+  }
+  #recipe-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+  .recipe-hero-image-placeholder { display: none !important; }
+
+  /* Left Column: Ingredients (Sidebar) */
+  .recipe-sidebar {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    position: static !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-height: none !important;
+  }
+  .ingredients-card {
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .section-title {
+    font-size: 11pt !important;
+    font-family: "Helvetica Neue", sans-serif !important;
+    border-bottom: 1px solid #000 !important;
+    margin: 0 0 0.4rem 0 !important;
+    padding-bottom: 0.2rem !important;
+    color: #000 !important;
+  }
+  .ingredients-list { gap: 0 !important; }
+  .ingredient-item {
+    padding: 0.18rem 0 !important;
+    border-bottom: 1px solid #eee !important;
+    font-size: 9pt !important;
+    break-inside: avoid;
+    display: block !important;
+  }
+  .ingredient-amount { font-weight: bold; margin-right: 4px; color: #000 !important; }
+  .ingredient-notes { font-size: 8pt !important; color: #555 !important; }
+
+  /* Right Column: Steps (Main) */
+  .recipe-main {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .steps-list {
+    gap: 0 !important;
+  }
+  .step-item {
+    background: none !important;
+    border: none !important;
+    border-bottom: 1px solid #eee !important;
+    border-radius: 0 !important;
+    padding: 0.3rem 0 !important;
+    gap: 0.6rem !important;
+    break-inside: avoid;
+  }
+  .step-item:last-child { border-bottom: none !important; }
+  .step-number {
+    width: 1.3rem !important;
+    height: 1.3rem !important;
+    font-size: 8pt !important;
+    flex-shrink: 0;
+    background: #222 !important;
+    margin-top: 0.15rem;
+  }
+  .step-text {
+    font-size: 10pt !important;
+    line-height: 1.45 !important;
+  }
+  .step-duration { font-size: 8pt !important; margin-top: 0.1rem !important; }
+  .step-actions { display: none !important; }
+}
 .ing-alt-btn {
   background: none;
   border: none;
@@ -784,15 +948,18 @@ body.edit-mode .ingredients-add-row { display: flex; }
 }
 
 @media (max-width: 640px) {
-  .cook-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .cook-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    overflow-y: auto;
+  }
   .cook-ingredients-panel {
     border-right: none;
     border-bottom: 1px solid var(--border);
-    max-height: 25vh;
+    max-height: none;
+    overflow-y: visible;
     padding: 0.75rem 1rem;
   }
-  .cook-steps-panel { padding: 1rem; }
-  .cook-timers-panel {
-    max-height: 30vh;
-  }
+  .cook-steps-panel { padding: 1rem; overflow-y: visible; }
+  .cook-timers-panel { max-height: none; overflow-y: visible; }
 }

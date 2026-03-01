@@ -166,25 +166,28 @@ func isPaywallPage(body string) bool {
 	return false
 }
 
-// extractHeuristic tries WordPress recipe plugin class names as a fallback.
+// extractHeuristic tries WordPress recipe plugin class names first, then falls
+// back to a generic DOM-walk that handles plain blog posts (e.g. Blogger) using
+// bold section headings + <br>-separated text or <ul>/<ol> lists.
 func extractHeuristic(body, sourceURL string) *models.CreateRecipeRequest {
-	// Very basic: look for common patterns
 	req := &models.CreateRecipeRequest{
 		SourceURL:    sourceURL,
 		BaseServings: 4,
 	}
 
-	// Look for title in common patterns
+	// WordPress recipe plugins (WPRM, Tasty Recipes)
 	if title := extractBetween(body, `class="wprm-recipe-name"`, "</", ">"); title != "" {
 		req.Title = title
 	} else if title := extractBetween(body, `class="tasty-recipes-title"`, "</", ">"); title != "" {
 		req.Title = title
 	}
 
-	if req.Title == "" {
-		return nil
+	if req.Title != "" {
+		return req
 	}
-	return req
+
+	// Generic DOM-walk fallback for plain HTML recipe posts
+	return extractGenericHTML(body, sourceURL)
 }
 
 func extractBetween(body, marker, end, start string) string {

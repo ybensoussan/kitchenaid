@@ -83,6 +83,42 @@
   gap: 0.25rem;
 }
 
+/* ── Card favorite button ── */
+.card-fav-btn {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  background: rgba(0,0,0,.35);
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  color: #fff;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.recipe-card:hover .card-fav-btn,
+.card-fav-btn.active { opacity: 1; }
+.card-fav-btn.active { color: #ef4444; background: rgba(0,0,0,.5); }
+
+/* ── Drag-and-drop states ── */
+.recipe-card[draggable="true"] { cursor: grab; }
+.recipe-card[draggable="true"]:active { cursor: grabbing; }
+.recipe-card.dragging { opacity: .35; box-shadow: none; transform: none; }
+.recipe-card.drag-over { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* ── Favorites filter button ── */
+.fav-filter-btn { color: var(--brand); }
+.fav-filter-btn.active { background: #fef2f2; border-color: #ef4444; color: #ef4444; }
+
+/* ── Favorite button on recipe page ── */
+#fav-btn.active { color: #ef4444; }
+
 /* ── Search / filters bar ── */
 .toolbar {
   display: flex;

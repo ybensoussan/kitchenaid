@@ -76,10 +76,10 @@
               </span>
             `).join('')}
             <button id="suggest-tags-btn" class="btn btn-secondary btn-sm edit-controls" style="margin-left: 0.5rem" title="Suggest tags using AI">
-              🪄 Suggest Tags
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 19v4"/></svg> Suggest Tags
             </button>
             <button id="add-tag-btn" class="btn btn-secondary btn-sm edit-controls" title="Add tag">
-              +
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
           </div>
         </div>
@@ -108,7 +108,7 @@
                </a>`
             : ''}
           <button id="hero-image-search-btn" class="btn btn-secondary btn-sm">
-            📷 Search for Image
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Search for Image
           </button>
         </div>
       </div>`;
@@ -418,10 +418,57 @@
   const editBtn = document.getElementById('edit-toggle-btn');
   editBtn?.addEventListener('click', () => {
     const active = editor.toggle();
-    editBtn.textContent = active ? '✓ Done Editing' : '✏ Edit Recipe';
-    editBtn.className   = active ? 'btn btn-primary' : 'btn btn-secondary';
+    if (active) {
+      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 11"/></svg><span class="btn-label"> Done Editing</span>`;
+      editBtn.className = 'btn btn-primary';
+    } else {
+      editBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="btn-label"> Edit Recipe</span>`;
+      editBtn.className = 'btn btn-secondary';
+    }
   });
 
+  document.getElementById('print-btn')?.addEventListener('click', () => window.print());
+
+  // ── Favorite toggle ───────────────────────────────────────────────────────
+
+  const favBtn = document.getElementById('fav-btn');
+  function updateFavBtn() {
+    if (!favBtn) return;
+    const path = favBtn.querySelector('svg path');
+    if (recipe.favorited) {
+      favBtn.classList.add('active');
+      if (path) path.setAttribute('fill', 'currentColor');
+    } else {
+      favBtn.classList.remove('active');
+      if (path) path.setAttribute('fill', 'none');
+    }
+  }
+  updateFavBtn();
+  favBtn?.addEventListener('click', async () => {
+    recipe.favorited = !recipe.favorited;
+    updateFavBtn();
+    try {
+      await api.setFavorited(recipeId, recipe.favorited);
+    } catch (err) {
+      recipe.favorited = !recipe.favorited;
+      updateFavBtn();
+      showToast('Failed to update favorite', true);
+    }
+  });
+
+  // ── Overflow dropdown ─────────────────────────────────────────────────────
+
+  const overflowDropdown = document.getElementById('recipe-overflow-dropdown');
+  const overflowBtn      = document.getElementById('recipe-overflow-btn');
+
+  overflowBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    overflowDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', () => overflowDropdown?.classList.remove('open'));
+
+  document.getElementById('export-json-link')?.setAttribute('href', `/api/recipes/${recipeId}/export?format=json`);
+  document.getElementById('export-html-link')?.setAttribute('href', `/api/recipes/${recipeId}/export?format=html`);
   // ── Photo upload ──────────────────────────────────────────────────────────
 
   document.getElementById('photo-upload-input')?.addEventListener('change', async e => {

@@ -28,6 +28,8 @@ const api = {
   updateRecipe:  (id, data) => api.put(`/api/recipes/${id}`, data),
   patchRecipe:   (id, field, value) => api.patch(`/api/recipes/${id}`, { field, value }),
   deleteRecipe:  (id)       => api.delete(`/api/recipes/${id}`),
+  setFavorited:  (id, val)  => api.patch(`/api/recipes/${id}`, { field: 'favorited', value: val ? 1 : 0 }),
+  reorderRecipes: (ids)     => api.put('/api/recipes/reorder', { ids }),
 
   // Ingredients
   addIngredient:    (rid, data)       => api.post(`/api/recipes/${rid}/ingredients`, data),

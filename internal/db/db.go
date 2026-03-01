@@ -56,6 +56,8 @@ func (s *Store) migrate() error {
 		`ALTER TABLE pantry_items ADD COLUMN amount REAL    NOT NULL DEFAULT 0`,
 		`ALTER TABLE pantry_items ADD COLUMN unit   TEXT    NOT NULL DEFAULT ''`,
 		`ALTER TABLE pantry_items ADD COLUMN notes  TEXT    NOT NULL DEFAULT ''`,
+		`ALTER TABLE recipes ADD COLUMN favorited  INTEGER NOT NULL DEFAULT 0`,
+		`ALTER TABLE recipes ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
 	} {
 		s.db.Exec(stmt) //nolint:errcheck
 	}
@@ -71,18 +73,18 @@ func (s *Store) ListRecipes(tagFilter string) ([]models.Recipe, error) {
 	if tagFilter != "" {
 		query = `
 			SELECT r.id, r.title, r.description, r.image_url, r.prep_time, r.cook_time,
-			       r.base_servings, r.source_url, r.created_at, r.updated_at
+			       r.base_servings, r.source_url, r.favorited, r.created_at, r.updated_at
 			FROM recipes r
 			JOIN recipe_tags rt ON r.id = rt.recipe_id
 			JOIN tags t ON rt.tag_id = t.id
 			WHERE t.name = ?
-			ORDER BY r.id DESC`
+			ORDER BY r.sort_order ASC, r.id DESC`
 		args = append(args, strings.ToLower(tagFilter))
 	} else {
 		query = `
 			SELECT id, title, description, image_url, prep_time, cook_time,
-			       base_servings, source_url, created_at, updated_at
-			FROM recipes ORDER BY id DESC`
+			       base_servings, source_url, favorited, created_at, updated_at
+			FROM recipes ORDER BY sort_order ASC, id DESC`
 	}
 
 	rows, err := s.db.Query(query, args...)
@@ -96,7 +98,7 @@ func (s *Store) ListRecipes(tagFilter string) ([]models.Recipe, error) {
 		var r models.Recipe
 		if err := rows.Scan(&r.ID, &r.Title, &r.Description, &r.ImageURL,
 			&r.PrepTime, &r.CookTime, &r.BaseServings, &r.SourceURL,
-			&r.CreatedAt, &r.UpdatedAt); err != nil {
+			&r.Favorited, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		recipes = append(recipes, r)
@@ -116,11 +118,11 @@ func (s *Store) GetRecipe(id int64) (*models.Recipe, error) {
 	r := &models.Recipe{}
 	err := s.db.QueryRow(`
 		SELECT id, title, description, image_url, prep_time, cook_time,
-		       base_servings, source_url, created_at, updated_at
+		       base_servings, source_url, favorited, created_at, updated_at
 		FROM recipes WHERE id = ?`, id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.ImageURL,
 		&r.PrepTime, &r.CookTime, &r.BaseServings, &r.SourceURL,
-		&r.CreatedAt, &r.UpdatedAt)
+		&r.Favorited, &r.CreatedAt, &r.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -242,6 +244,7 @@ func (s *Store) UpdateRecipe(id int64, req models.CreateRecipeRequest) (*models.
 var patchAllowlist = map[string]bool{
 	"title": true, "description": true, "image_url": true,
 	"prep_time": true, "cook_time": true, "base_servings": true,
+	"favorited": true,
 }
 
 func (s *Store) PatchRecipe(id int64, field string, value interface{}) error {
@@ -258,6 +261,20 @@ func (s *Store) PatchRecipe(id int64, field string, value interface{}) error {
 func (s *Store) DeleteRecipe(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM recipes WHERE id=?`, id)
 	return err
+}
+
+func (s *Store) ReorderRecipes(ids []int64) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for i, id := range ids {
+		if _, err = tx.Exec(`UPDATE recipes SET sort_order=? WHERE id=?`, i, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // ── Ingredients ──────────────────────────────────────────────────────────────

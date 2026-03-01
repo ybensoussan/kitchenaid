@@ -11,6 +11,7 @@ type Recipe struct {
 	CookTime     int       `json:"cook_time"`
 	BaseServings int       `json:"base_servings"`
 	SourceURL    string    `json:"source_url"`
+	Favorited    bool      `json:"favorited"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Ingredients  []Ingredient `json:"ingredients,omitempty"`

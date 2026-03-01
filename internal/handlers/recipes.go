@@ -108,3 +108,16 @@ func (h *Handler) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
 	}
 	h.writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
+
+func (h *Handler) ReorderRecipes(w http.ResponseWriter, r *http.Request) {
+	var req models.ReorderRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+		return
+	}
+	if err := h.Store.ReorderRecipes(req.IDs); err != nil {
+		h.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
