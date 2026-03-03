@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Store) ListPantryItems() ([]models.PantryItem, error) {
-	rows, err := s.db.Query(`SELECT id, name, amount, unit, notes, created_at FROM pantry_items ORDER BY name`)
+	rows, err := s.db.Query(`SELECT id, name, amount, unit, notes, price, price_unit_size, created_at FROM pantry_items ORDER BY name`)
 	if err != nil {
 		return nil, err
 	}
@@ -15,7 +15,7 @@ func (s *Store) ListPantryItems() ([]models.PantryItem, error) {
 	var items []models.PantryItem
 	for rows.Next() {
 		var it models.PantryItem
-		if err := rows.Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.CreatedAt); err != nil {
+		if err := rows.Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.Price, &it.PriceUnitSize, &it.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, it)
@@ -25,37 +25,38 @@ func (s *Store) ListPantryItems() ([]models.PantryItem, error) {
 
 func (s *Store) AddPantryItem(inp models.PantryItemInput) (*models.PantryItem, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO pantry_items (name, amount, unit, notes) VALUES (?, ?, ?, ?)
-		ON CONFLICT(name) DO UPDATE SET amount=excluded.amount, unit=excluded.unit, notes=excluded.notes`,
-		inp.Name, inp.Amount, inp.Unit, inp.Notes)
+		INSERT INTO pantry_items (name, amount, unit, notes, price, price_unit_size) VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(name) DO UPDATE SET amount=excluded.amount, unit=excluded.unit, notes=excluded.notes,
+		                                price=excluded.price, price_unit_size=excluded.price_unit_size`,
+		inp.Name, inp.Amount, inp.Unit, inp.Notes, inp.Price, inp.PriceUnitSize)
 	if err != nil {
 		return nil, err
 	}
 	id, _ := res.LastInsertId()
 	if id == 0 {
 		var it models.PantryItem
-		err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, created_at FROM pantry_items WHERE name=?`, inp.Name).
-			Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.CreatedAt)
+		err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, price, price_unit_size, created_at FROM pantry_items WHERE name=?`, inp.Name).
+			Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.Price, &it.PriceUnitSize, &it.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
 		return &it, nil
 	}
 	var it models.PantryItem
-	err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, created_at FROM pantry_items WHERE id=?`, id).
-		Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.CreatedAt)
+	err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, price, price_unit_size, created_at FROM pantry_items WHERE id=?`, id).
+		Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.Price, &it.PriceUnitSize, &it.CreatedAt)
 	return &it, err
 }
 
 func (s *Store) UpdatePantryItem(id int64, inp models.PantryItemInput) (*models.PantryItem, error) {
-	_, err := s.db.Exec(`UPDATE pantry_items SET name=?, amount=?, unit=?, notes=? WHERE id=?`,
-		inp.Name, inp.Amount, inp.Unit, inp.Notes, id)
+	_, err := s.db.Exec(`UPDATE pantry_items SET name=?, amount=?, unit=?, notes=?, price=?, price_unit_size=? WHERE id=?`,
+		inp.Name, inp.Amount, inp.Unit, inp.Notes, inp.Price, inp.PriceUnitSize, id)
 	if err != nil {
 		return nil, err
 	}
 	var it models.PantryItem
-	err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, created_at FROM pantry_items WHERE id=?`, id).
-		Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.CreatedAt)
+	err = s.db.QueryRow(`SELECT id, name, amount, unit, notes, price, price_unit_size, created_at FROM pantry_items WHERE id=?`, id).
+		Scan(&it.ID, &it.Name, &it.Amount, &it.Unit, &it.Notes, &it.Price, &it.PriceUnitSize, &it.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

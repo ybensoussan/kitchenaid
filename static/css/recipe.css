@@ -975,3 +975,15 @@ body.edit-mode .ingredients-add-row { display: flex; }
   .cook-steps-panel { padding: 1rem; overflow-y: visible; }
   .cook-timers-panel { max-height: none; overflow-y: visible; }
 }
+
+/* ── Recipe cost row ── */
+.recipe-cost-row {
+  display: flex; align-items: baseline; gap: 0.75rem;
+  margin-top: 0.5rem; flex-wrap: wrap;
+}
+.recipe-cost-label {
+  font-size: 0.78rem; color: var(--muted);
+  font-weight: 500; text-transform: uppercase; letter-spacing: .04em;
+}
+.recipe-cost-value { font-size: 0.95rem; font-weight: 600; }
+.recipe-cost-per, .recipe-cost-coverage { font-size: 0.8rem; color: var(--muted); font-weight: 400; }

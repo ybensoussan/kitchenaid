@@ -46,9 +46,30 @@
     .pantry-item-amount { color: var(--brand); font-weight: 600; min-width: 3.5rem; text-align: right; white-space: nowrap; }
     .pantry-item-unit { color: var(--muted); min-width: 2.5rem; }
     .pantry-item-notes { color: var(--muted); font-size: 0.8rem; font-style: italic; flex: 1; }
+    .pantry-item-price { color: var(--muted); font-size: 0.8rem; min-width: 6rem; text-align: right; white-space: nowrap; }
     .pantry-item-edit { display: none; flex: 1; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .pantry-item-edit .form-input { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
     .pantry-item-edit .form-select { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
+    .price-lookup-btn { font-size: 0.8rem; padding: 0.15rem 0.4rem; color: var(--muted); }
+    .price-lookup-btn:hover { color: var(--brand); }
+
+    /* AH picker modal body */
+    .ah-product-list { display: flex; flex-direction: column; gap: 0; max-height: 420px; overflow-y: auto; }
+    .ah-product-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 1rem; cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .ah-product-item:last-child { border-bottom: none; }
+    .ah-product-item:hover { background: var(--hover-bg); }
+    .ah-product-thumb { width: 56px; height: 56px; object-fit: contain; border-radius: 4px; flex-shrink: 0; background: #f5f5f5; }
+    .ah-product-thumb-placeholder { width: 56px; height: 56px; flex-shrink: 0; background: var(--hover-bg); border-radius: 4px; }
+    .ah-product-info { flex: 1; min-width: 0; }
+    .ah-product-title { font-size: 0.9rem; font-weight: 500; }
+    .ah-product-size { font-size: 0.78rem; color: var(--muted); }
+    .ah-product-price { font-size: 0.9rem; font-weight: 600; color: var(--brand); white-space: nowrap; }
+    .ah-picker-loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
     .pantry-item.editing .pantry-item-view { display: none; }
     .pantry-item.editing .pantry-item-edit { display: flex; }
     .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
@@ -97,8 +118,8 @@
   <div class="header-inner">
     <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
     <nav class="header-nav">
-      <a href="/" class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span class="btn-label"> Recipes</span></a>
-      <a href="/settings.html" class="btn btn-secondary" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
+      <a href="/" class="btn btn-secondary btn-icon" title="Recipes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+      <a href="/settings.html" class="btn btn-secondary btn-icon" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
       <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
     </nav>
   </div>
@@ -158,6 +179,17 @@
 </main>
 
 <div id="toast-container" class="toast-container"></div>
+
+<!-- AH Price Picker Modal -->
+<div id="ah-picker-modal" class="modal-overlay">
+  <div class="modal" style="width:min(540px,94vw)">
+    <div class="modal-header">
+      <h2 class="modal-title">AH Price Lookup: <span id="ah-picker-name"></span></h2>
+      <button class="modal-close btn btn-ghost btn-icon">✕</button>
+    </div>
+    <div id="ah-picker-body"></div>
+  </div>
+</div>
 
 <script src="/js/api.js"></script>
 <script src="/js/unit-list.js"></script>
@@ -261,6 +293,8 @@
           <span class="pantry-item-amount">${it.amount || ''}</span>
           <span class="pantry-item-unit">${escHtml(it.unit)}</span>
           <span class="pantry-item-notes">${escHtml(it.notes)}</span>
+          <span class="pantry-item-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</span>
+          <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" data-id="${it.id}" data-name="${escHtml(it.name)}" title="Look up price on AH">€</button>
           <button class="btn btn-ghost btn-icon edit-btn" title="Edit">✏</button>
           <button class="btn btn-ghost btn-icon delete-btn" title="Delete" style="color:#dc2626">🗑</button>
         </div>
@@ -269,6 +303,8 @@
           <input type="number" class="form-input edit-amount" value="${it.amount||''}"      placeholder="0" step="any" min="0" style="width:70px">
           <select class="form-select edit-unit" style="width:80px" data-selected="${escHtml(it.unit)}"></select>
           <input type="text"   class="form-input edit-notes"  value="${escHtml(it.notes)}" placeholder="Notes" style="flex:1;min-width:80px">
+          <input type="number" class="form-input edit-price"      value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€ price" style="width:80px">
+          <input type="text"   class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}"  placeholder="e.g. 1 kg" style="width:90px">
           <button class="btn btn-primary btn-sm save-edit-btn">Save</button>
           <button class="btn btn-secondary btn-sm cancel-edit-btn">Cancel</button>
         </div>
@@ -293,17 +329,23 @@
       });
 
       el.querySelector('.save-edit-btn').addEventListener('click', async () => {
-        const name   = el.querySelector('.edit-name').value.trim();
-        const amount = parseFloat(el.querySelector('.edit-amount').value) || 0;
-        const unit   = el.querySelector('.edit-unit').value;
-        const notes  = el.querySelector('.edit-notes').value.trim();
+        const name          = el.querySelector('.edit-name').value.trim();
+        const amount        = parseFloat(el.querySelector('.edit-amount').value) || 0;
+        const unit          = el.querySelector('.edit-unit').value;
+        const notes         = el.querySelector('.edit-notes').value.trim();
+        const price         = parseFloat(el.querySelector('.edit-price').value) || 0;
+        const price_unit_size = el.querySelector('.edit-price-size').value.trim();
         if (!name) { showToast('Name is required', true); return; }
         try {
-          await api.updatePantryItem(id, { name, amount, unit, notes });
+          await api.updatePantryItem(id, { name, amount, unit, notes, price, price_unit_size });
           await loadItems();
         } catch (e) {
           showToast('Update failed: ' + e.message, true);
         }
+      });
+
+      el.querySelector('.price-lookup-btn').addEventListener('click', () => {
+        openAHPicker(id, item.name);
       });
 
       el.querySelector('.delete-btn').addEventListener('click', async () => {
@@ -349,6 +391,71 @@
   document.getElementById('search-input').addEventListener('input', e => {
     renderList(e.target.value);
   });
+
+  // ── AH Price Picker ───────────────────────────────────────────────────────
+
+  const ahModal     = document.getElementById('ah-picker-modal');
+  const ahPickerName = document.getElementById('ah-picker-name');
+  const ahPickerBody = document.getElementById('ah-picker-body');
+  let ahTargetId    = null;
+  let ahTargetItem  = null;
+
+  ahModal.querySelector('.modal-close').addEventListener('click', () => ahModal.classList.remove('open'));
+  ahModal.addEventListener('click', e => { if (e.target === ahModal) ahModal.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') ahModal.classList.remove('open'); });
+
+  async function openAHPicker(itemId, itemName) {
+    ahTargetId   = itemId;
+    ahTargetItem = items.find(it => it.id === itemId);
+    ahPickerName.textContent = itemName;
+    ahPickerBody.innerHTML   = `<div class="ah-picker-loading"><div class="spinner"></div> Searching AH…</div>`;
+    ahModal.classList.add('open');
+
+    try {
+      const data = await api.searchAH(itemName);
+      const products = data.products || [];
+      if (products.length === 0) {
+        ahPickerBody.innerHTML = `<p style="padding:1.25rem;color:var(--muted);text-align:center">No results found on AH.</p>`;
+        return;
+      }
+      ahPickerBody.innerHTML = `<div class="ah-product-list">${products.map((p, i) =>
+        `<div class="ah-product-item" data-idx="${i}">
+          ${p.imageUrl
+            ? `<img class="ah-product-thumb" src="${escHtml(p.imageUrl)}" alt="" loading="lazy">`
+            : `<div class="ah-product-thumb-placeholder"></div>`}
+          <div class="ah-product-info">
+            <div class="ah-product-title">${escHtml(p.title)}</div>
+            <div class="ah-product-size">${escHtml(p.salesUnitSize)}${p.unitPriceDesc ? ' · ' + escHtml(p.unitPriceDesc) : ''}</div>
+          </div>
+          <div class="ah-product-price">€${p.price.toFixed(2)}</div>
+        </div>`
+      ).join('')}</div>`;
+
+      ahPickerBody.querySelectorAll('.ah-product-item').forEach(el => {
+        const p = products[parseInt(el.dataset.idx, 10)];
+        el.addEventListener('click', async () => {
+          ahModal.classList.remove('open');
+          try {
+            const base = ahTargetItem || {};
+            await api.updatePantryItem(ahTargetId, {
+              name:           base.name   || '',
+              amount:         base.amount || 0,
+              unit:           base.unit   || '',
+              notes:          base.notes  || '',
+              price:          p.price,
+              price_unit_size: p.salesUnitSize,
+            });
+            await loadItems();
+            showToast(`Price set: €${p.price.toFixed(2)} / ${p.salesUnitSize}`);
+          } catch (e) {
+            showToast('Failed to set price: ' + e.message, true);
+          }
+        });
+      });
+    } catch (e) {
+      ahPickerBody.innerHTML = `<p style="padding:1.25rem;color:#dc2626;text-align:center">${escHtml(e.message)}</p>`;
+    }
+  }
 
   // ── Init ─────────────────────────────────────────────────────────────────
 

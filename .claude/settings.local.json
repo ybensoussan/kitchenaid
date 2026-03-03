@@ -9,7 +9,10 @@
       "Bash(lsof:*)",
       "Bash(node --version)",
       "Bash(npx --version)",
-      "Bash(__NEW_LINE_35858141a282216f__ $CHROME:*)"
+      "Bash(__NEW_LINE_35858141a282216f__ $CHROME:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.ah.nl)",
+      "WebFetch(domain:api.ah.nl)"
     ]
   }
 }

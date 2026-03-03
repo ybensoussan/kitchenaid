@@ -18,6 +18,10 @@
 
   document.title = `${recipe.title} — KitchenAid`;
 
+  // Load pantry for cost estimation (best-effort)
+  let pantryItems = [];
+  try { pantryItems = await api.listPantryItems(); } catch(_) {}
+
   // Init scaling
   scaling.setBase(recipe.base_servings || 4);
   scaling.setDesired(recipe.base_servings || 4);
@@ -43,6 +47,66 @@
     if (mins < 60) return `${mins} min`;
     const h = Math.floor(mins / 60), m = mins % 60;
     return m ? `${h}h ${m}m` : `${h}h`;
+  }
+
+  // ── Recipe cost helpers ───────────────────────────────────────────────────
+
+  function parseAHUnitSize(sizeStr) {
+    if (!sizeStr) return null;
+    // Normalise Dutch decimal comma → dot, e.g. "0,5 l" → "0.5 l"
+    const s = sizeStr.trim().replace(',', '.');
+    const m = s.match(/^([\d.]+)\s*(.+)$/);
+    if (!m) return null;
+    const num = parseFloat(m[1]);
+    const raw = m[2].toLowerCase().trim();
+    if (isNaN(num) || num <= 0) return null;
+
+    const unitMap = {
+      'kg': { unit: 'g',     factor: 1000 },
+      'g':  { unit: 'g',     factor: 1    },
+      'mg': { unit: 'g',     factor: 0.001},
+      'l':  { unit: 'ml',    factor: 1000 },
+      'ml': { unit: 'ml',    factor: 1    },
+      'stuks': { unit: 'piece', factor: 1 },
+      'stuk':  { unit: 'piece', factor: 1 },
+      'st':    { unit: 'piece', factor: 1 },
+    };
+    const entry = unitMap[raw];
+    if (!entry) return null;
+    return { amount: num * entry.factor, unit: entry.unit };
+  }
+
+  function toBaseUnit(amount, unit) {
+    const u = (unit || '').toLowerCase().trim();
+    const map = {
+      'g': ['g', amount], 'kg': ['g', amount * 1000], 'mg': ['g', amount * 0.001],
+      'ml': ['ml', amount], 'l': ['ml', amount * 1000],
+      'piece': ['piece', amount], 'pieces': ['piece', amount],
+      'stuks': ['piece', amount], 'stuk': ['piece', amount],
+    };
+    return map[u] || null;
+  }
+
+  function calcIngredientCost(ingAmount, ingUnit, pkgPrice, pkgSizeStr) {
+    const pkg = parseAHUnitSize(pkgSizeStr);
+    if (!pkg) return null;
+    const ingBase = toBaseUnit(ingAmount, ingUnit);
+    if (!ingBase) return null;
+    if (ingBase[0] !== pkg.unit) return null;
+    if (pkg.amount <= 0) return null;
+    return (ingBase[1] / pkg.amount) * pkgPrice;
+  }
+
+  function computeRecipeCost(ingredients, pantry) {
+    const byName = new Map(pantry.map(p => [p.name.toLowerCase().trim(), p]));
+    let total = 0, priced = 0;
+    for (const ing of ingredients) {
+      const p = byName.get(ing.name.toLowerCase().trim());
+      if (!p || p.price <= 0) continue;
+      const cost = calcIngredientCost(ing.amount, ing.unit, p.price, p.price_unit_size);
+      if (cost !== null) { total += cost; priced++; }
+    }
+    return { total, priced, of: ingredients.length };
   }
 
   function renderHero() {
@@ -99,6 +163,19 @@
             <span class="recipe-meta-value">${recipe.base_servings}</span>
           </div>
         </div>
+        ${(() => {
+          const cost = computeRecipeCost(recipe.ingredients || [], pantryItems);
+          if (cost.priced === 0) return '';
+          const perServing = recipe.base_servings > 0 ? cost.total / recipe.base_servings : 0;
+          return `<div class="recipe-cost-row">
+            <span class="recipe-cost-label">Est. cost</span>
+            <span class="recipe-cost-value">
+              ~€${cost.total.toFixed(2)}
+              ${perServing > 0 ? `<span class="recipe-cost-per"> · ~€${perServing.toFixed(2)}/serving</span>` : ''}
+              <span class="recipe-cost-coverage">(${cost.priced}/${cost.of} ingredients priced)</span>
+            </span>
+          </div>`;
+        })()}
         <div class="recipe-external-links">
           ${recipe.source_url
             ? `<a href="${escHtml(recipe.source_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">

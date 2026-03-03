@@ -78,6 +78,8 @@ func main() {
 	mux.HandleFunc("PUT /api/pantry/{id}",    h.UpdatePantryItem)
 	mux.HandleFunc("DELETE /api/pantry/{id}", h.DeletePantryItem)
 
+	mux.HandleFunc("GET /api/ah/search", h.SearchAH)
+
 	// Static files
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(cfg.UploadsDir))))
 	mux.Handle("/", http.FileServer(http.Dir("./static")))

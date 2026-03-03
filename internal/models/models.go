@@ -88,19 +88,23 @@ type ImportHTMLRequest struct {
 }
 
 type PantryItem struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Amount    float64   `json:"amount"`
-	Unit      string    `json:"unit"`
-	Notes     string    `json:"notes"`
-	CreatedAt time.Time `json:"created_at"`
+	ID            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Amount        float64   `json:"amount"`
+	Unit          string    `json:"unit"`
+	Notes         string    `json:"notes"`
+	Price         float64   `json:"price"`
+	PriceUnitSize string    `json:"price_unit_size"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type PantryItemInput struct {
-	Name   string  `json:"name"`
-	Amount float64 `json:"amount"`
-	Unit   string  `json:"unit"`
-	Notes  string  `json:"notes"`
+	Name          string  `json:"name"`
+	Amount        float64 `json:"amount"`
+	Unit          string  `json:"unit"`
+	Notes         string  `json:"notes"`
+	Price         float64 `json:"price"`
+	PriceUnitSize string  `json:"price_unit_size"`
 }
 
 type UploadResponse struct {

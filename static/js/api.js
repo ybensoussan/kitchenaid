@@ -78,4 +78,7 @@ const api = {
   updatePantryItem:   (id, data)     => api.put(`/api/pantry/${id}`, data),
   deletePantryItem:   (id)           => api.delete(`/api/pantry/${id}`),
   batchAddPantryItems: (items)       => api.post('/api/pantry/batch', items),
+
+  // AH price lookup
+  searchAH: (q) => api.get(`/api/ah/search?q=${encodeURIComponent(q)}`),
 };

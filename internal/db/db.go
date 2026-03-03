@@ -58,6 +58,8 @@ func (s *Store) migrate() error {
 		`ALTER TABLE pantry_items ADD COLUMN notes  TEXT    NOT NULL DEFAULT ''`,
 		`ALTER TABLE recipes ADD COLUMN favorited  INTEGER NOT NULL DEFAULT 0`,
 		`ALTER TABLE recipes ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
+		`ALTER TABLE pantry_items ADD COLUMN price           REAL NOT NULL DEFAULT 0`,
+		`ALTER TABLE pantry_items ADD COLUMN price_unit_size TEXT NOT NULL DEFAULT ''`,
 	} {
 		s.db.Exec(stmt) //nolint:errcheck
 	}
