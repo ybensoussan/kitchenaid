@@ -133,6 +133,26 @@
   </div>
 </div>
 
+<!-- Pantry link modal (link ingredient → pantry item) -->
+<div id="pantry-link-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Link to Pantry Item</h2>
+      <button class="modal-close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pantry-picker-search">
+      <input type="search" id="pantry-link-search" class="form-input" placeholder="Search pantry…" autocomplete="off">
+    </div>
+    <ul id="pantry-link-list" class="pantry-picker-list"></ul>
+    <div class="modal-footer">
+      <button id="pantry-link-clear" type="button" class="btn btn-ghost">Clear link</button>
+      <div style="flex:1"></div>
+      <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+      <button id="pantry-link-confirm" class="btn btn-primary" disabled>Link</button>
+    </div>
+  </div>
+</div>
+
 <!-- Pantry review modal -->
 <div id="pantry-review-modal" class="modal-overlay" role="dialog" aria-modal="true">
   <div class="modal">

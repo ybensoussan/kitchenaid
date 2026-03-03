@@ -446,7 +446,7 @@ body.edit-mode .ingredients-add-row { display: flex; }
   .tag-del-btn, .edit-controls, #suggest-tags-btn, #add-tag-btn,
   .recipe-hero-image-placeholder-link, .placeholder-search-hint,
   .unit-btn, .units-toggle, .servings-control, .ingredients-add-btn,
-  .ingredients-add-row, .step-actions, .step-delete-btn, .ing-alt-btn,
+  .ingredients-add-row, .step-actions, .step-delete-btn, .ing-alt-btn, .ing-link-btn,
   .header-nav, .btn, .card-tags, .recipe-tags-container, .cook-check-box {
     display: none !important;
   }
@@ -598,7 +598,7 @@ body.edit-mode .ingredients-add-row { display: flex; }
   .step-duration { font-size: 8pt !important; margin-top: 0.1rem !important; }
   .step-actions { display: none !important; }
 }
-.ing-alt-btn {
+.ing-alt-btn, .ing-link-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -610,8 +610,12 @@ body.edit-mode .ingredients-add-row { display: flex; }
   transition: opacity var(--transition), background var(--transition), color var(--transition);
   flex-shrink: 0;
 }
-.ingredient-item:hover .ing-alt-btn { opacity: 1; }
+.ingredient-item:hover .ing-alt-btn,
+.ingredient-item:hover .ing-link-btn { opacity: 1; }
 .ing-alt-btn:hover { background: var(--hover-bg); color: var(--brand); }
+.ing-link-btn:hover { background: var(--hover-bg); color: var(--brand); }
+.ing-link-btn.linked { opacity: 0.6; color: var(--brand); }
+.ingredient-item:hover .ing-link-btn.linked { opacity: 1; }
 
 .alt-loading { padding: 1.5rem; text-align: center; color: var(--muted); }
 .alt-list { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.25rem 0; }

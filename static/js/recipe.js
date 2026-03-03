@@ -53,8 +53,11 @@
 
   function parseAHUnitSize(sizeStr) {
     if (!sizeStr) return null;
-    // Normalise Dutch decimal comma → dot, e.g. "0,5 l" → "0.5 l"
     const s = sizeStr.trim().replace(',', '.');
+
+    // Handle "per stuk / per piece / per st" → 1 piece
+    if (/^per\s+(stuk|piece|st)\b/i.test(s)) return { amount: 1, unit: 'piece' };
+
     const m = s.match(/^([\d.]+)\s*(.+)$/);
     if (!m) return null;
     const num = parseFloat(m[1]);
@@ -62,48 +65,110 @@
     if (isNaN(num) || num <= 0) return null;
 
     const unitMap = {
-      'kg': { unit: 'g',     factor: 1000 },
-      'g':  { unit: 'g',     factor: 1    },
-      'mg': { unit: 'g',     factor: 0.001},
-      'l':  { unit: 'ml',    factor: 1000 },
-      'ml': { unit: 'ml',    factor: 1    },
-      'stuks': { unit: 'piece', factor: 1 },
-      'stuk':  { unit: 'piece', factor: 1 },
-      'st':    { unit: 'piece', factor: 1 },
+      // weight
+      'kg': { unit: 'g',  factor: 1000  }, 'g':  { unit: 'g',  factor: 1     }, 'mg': { unit: 'g',  factor: 0.001 },
+      // volume — metric
+      'l':  { unit: 'ml', factor: 1000  }, 'ml': { unit: 'ml', factor: 1     },
+      // volume — cooking measures
+      'tsp':         { unit: 'ml', factor: 5   }, 'teaspoon':   { unit: 'ml', factor: 5   }, 'teaspoons':  { unit: 'ml', factor: 5   },
+      'tbsp':        { unit: 'ml', factor: 15  }, 'tablespoon': { unit: 'ml', factor: 15  }, 'tablespoons':{ unit: 'ml', factor: 15  },
+      'cup':         { unit: 'ml', factor: 240 }, 'cups':       { unit: 'ml', factor: 240 },
+      'fl oz':       { unit: 'ml', factor: 30  }, 'floz':       { unit: 'ml', factor: 30  },
+      // count
+      'stuks': { unit: 'piece', factor: 1 }, 'stuk': { unit: 'piece', factor: 1 }, 'st': { unit: 'piece', factor: 1 },
     };
     const entry = unitMap[raw];
     if (!entry) return null;
     return { amount: num * entry.factor, unit: entry.unit };
   }
 
+  // Density table: grams per teaspoon for common dry ingredients.
+  // Lets tsp/tbsp/cup ingredients cost against g-based pantry sizes.
+  const DRY_G_PER_TSP = {
+    'salt': 5.7, 'sea salt': 5.7, 'kosher salt': 4.8,
+    'sugar': 4.2, 'white sugar': 4.2, 'granulated sugar': 4.2,
+    'brown sugar': 3.6, 'powdered sugar': 2.5, 'icing sugar': 2.5,
+    'flour': 2.6, 'all-purpose flour': 2.6, 'bread flour': 2.9, 'whole wheat flour': 2.9,
+    'baking soda': 4.6, 'bicarbonate of soda': 4.6,
+    'baking powder': 4.0,
+    'cornstarch': 2.7, 'corn starch': 2.7, 'arrowroot': 2.6, 'arrowroot powder': 2.6,
+    'cocoa powder': 2.5, 'unsweetened cocoa': 2.5,
+    'cinnamon': 2.3, 'ground cinnamon': 2.3,
+    'cumin': 2.5, 'ground cumin': 2.5,
+    'coriander': 1.8, 'ground coriander': 1.8,
+    'turmeric': 2.8, 'ground turmeric': 2.8,
+    'paprika': 2.3, 'smoked paprika': 2.3, 'sweet paprika': 2.3,
+    'cayenne': 2.7, 'cayenne pepper': 2.7, 'cayenne powder': 2.7,
+    'chili powder': 2.7, 'chilli powder': 2.7, 'chile powder': 2.7,
+    'black pepper': 2.1, 'pepper': 2.1, 'white pepper': 2.4,
+    'garlic powder': 3.1, 'onion powder': 2.4,
+    'garam masala': 2.5, 'curry powder': 2.5,
+    'oregano': 0.9, 'dried oregano': 0.9,
+    'thyme': 1.1, 'dried thyme': 1.1,
+    'basil': 0.7, 'dried basil': 0.7,
+    'rosemary': 1.2, 'dried rosemary': 1.2,
+    'nutmeg': 2.2, 'ground nutmeg': 2.2,
+    'cardamom': 2.0, 'ground cardamom': 2.0,
+    'cloves': 2.1, 'ground cloves': 2.1,
+    'allspice': 1.9, 'ground allspice': 1.9,
+    'mustard powder': 2.8, 'dry mustard': 2.8,
+  };
+
   function toBaseUnit(amount, unit) {
     const u = (unit || '').toLowerCase().trim();
     const map = {
+      // weight
       'g': ['g', amount], 'kg': ['g', amount * 1000], 'mg': ['g', amount * 0.001],
+      // volume — metric
       'ml': ['ml', amount], 'l': ['ml', amount * 1000],
+      // volume — cooking measures (to ml)
+      'tsp': ['ml', amount * 5], 'teaspoon': ['ml', amount * 5], 'teaspoons': ['ml', amount * 5],
+      'tbsp': ['ml', amount * 15], 'tablespoon': ['ml', amount * 15], 'tablespoons': ['ml', amount * 15],
+      'cup': ['ml', amount * 240], 'cups': ['ml', amount * 240],
+      'fl oz': ['ml', amount * 30], 'floz': ['ml', amount * 30],
+      // count
       'piece': ['piece', amount], 'pieces': ['piece', amount],
-      'stuks': ['piece', amount], 'stuk': ['piece', amount],
+      'stuks': ['piece', amount], 'stuk': ['piece', amount], 'st': ['piece', amount],
     };
     return map[u] || null;
   }
 
-  function calcIngredientCost(ingAmount, ingUnit, pkgPrice, pkgSizeStr) {
+  function calcIngredientCost(ingAmount, ingUnit, ingName, pkgPrice, pkgSizeStr) {
     const pkg = parseAHUnitSize(pkgSizeStr);
-    if (!pkg) return null;
+    if (!pkg || pkg.amount <= 0) return null;
+
+    // Standard unit-compatible path
     const ingBase = toBaseUnit(ingAmount, ingUnit);
-    if (!ingBase) return null;
-    if (ingBase[0] !== pkg.unit) return null;
-    if (pkg.amount <= 0) return null;
-    return (ingBase[1] / pkg.amount) * pkgPrice;
+    if (ingBase && ingBase[0] === pkg.unit) {
+      return (ingBase[1] / pkg.amount) * pkgPrice;
+    }
+
+    // Density fallback: tsp/tbsp/cup of a dry ingredient → grams
+    if (pkg.unit === 'g') {
+      const u = (ingUnit || '').toLowerCase().trim();
+      const tspFactor = { 'tsp': 1, 'teaspoon': 1, 'teaspoons': 1, 'tbsp': 3, 'tablespoon': 3, 'tablespoons': 3, 'cup': 48, 'cups': 48 }[u];
+      if (tspFactor) {
+        const name = (ingName || '').toLowerCase().trim();
+        const density = DRY_G_PER_TSP[name];
+        if (density) {
+          const ingGrams = ingAmount * tspFactor * density;
+          return (ingGrams / pkg.amount) * pkgPrice;
+        }
+      }
+    }
+
+    return null;
   }
 
   function computeRecipeCost(ingredients, pantry) {
+    const byId   = new Map(pantry.map(p => [p.id, p]));
     const byName = new Map(pantry.map(p => [p.name.toLowerCase().trim(), p]));
     let total = 0, priced = 0;
     for (const ing of ingredients) {
-      const p = byName.get(ing.name.toLowerCase().trim());
+      const p = (ing.pantry_item_id ? byId.get(ing.pantry_item_id) : null)
+             || byName.get(ing.name.toLowerCase().trim());
       if (!p || p.price <= 0) continue;
-      const cost = calcIngredientCost(ing.amount, ing.unit, p.price, p.price_unit_size);
+      const cost = calcIngredientCost(ing.amount, ing.unit, ing.name, p.price, p.price_unit_size);
       if (cost !== null) { total += cost; priced++; }
     }
     return { total, priced, of: ingredients.length };
@@ -415,11 +480,14 @@
     list.innerHTML = ings.map(ing => {
       const scaled = scaling.getScaledAmount(ing.amount);
       const fmt = units.formatAmount(scaled, ing.unit);
+      const linked = ing.pantry_item_id ? pantryItems.find(p => p.id === ing.pantry_item_id) : null;
+      const linkTitle = linked ? `Linked: ${linked.name}` : 'Link to pantry item';
       return `
         <div class="ingredient-item" data-id="${ing.id}">
           <span class="ingredient-amount">${escHtml(fmt)}</span>
           <span class="ingredient-name">${escHtml(ing.name)}</span>
           ${ing.notes ? `<span class="ingredient-notes">${escHtml(ing.notes)}</span>` : ''}
+          <button class="ing-link-btn${linked ? ' linked' : ''}" data-id="${ing.id}" title="${escHtml(linkTitle)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
           <button class="ing-alt-btn" data-id="${ing.id}" title="Find alternatives">⇄</button>
         </div>`;
     }).join('');
@@ -431,6 +499,16 @@
         const id = parseInt(el.dataset.id, 10);
         const ing = ings.find(i => i.id === id);
         if (ing) editor.openIngredientModal(ing, ings, null);
+      });
+    });
+
+    // Wire link buttons
+    list.querySelectorAll('.ing-link-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id, 10);
+        const ing = ings.find(i => i.id === id);
+        if (ing) openLinkModal(ing);
       });
     });
 
@@ -618,9 +696,7 @@
 
   function renderPickerList(items, query = '') {
     const q = query.toLowerCase();
-    const filtered = items.filter(it =>
-      it.name.toLowerCase().includes(q) || (it.notes || '').toLowerCase().includes(q)
-    );
+    const filtered = items.filter(it => it.name.toLowerCase().includes(q));
 
     if (filtered.length === 0) {
       pickerList.innerHTML = `<li class="pantry-picker-empty">${items.length === 0 ? 'Your pantry is empty.' : 'No results.'}</li>`;
@@ -644,11 +720,10 @@
       li.appendChild(cb);
       li.appendChild(nameEl);
 
-      const detail = [item.amount || null, item.unit || null].filter(Boolean).join(' ');
-      if (detail) {
+      if (item.price_unit_size) {
         const d = document.createElement('span');
         d.className = 'pantry-picker-item-detail';
-        d.textContent = detail;
+        d.textContent = item.price > 0 ? `€${item.price.toFixed(2)} / ${item.price_unit_size}` : item.price_unit_size;
         li.appendChild(d);
       }
 
@@ -691,9 +766,9 @@
       try {
         await api.addIngredient(recipeId, {
           name: item.name,
-          amount: item.amount || 0,
-          unit: item.unit || '',
-          notes: item.notes || '',
+          amount: 0,
+          unit: '',
+          notes: '',
           sort_order: (recipe.ingredients || []).length + added,
         });
         added++;
@@ -711,6 +786,130 @@
     btn.addEventListener('click', () => pickerModal.classList.remove('open')));
   pickerModal?.addEventListener('click', e => {
     if (e.target === pickerModal) pickerModal.classList.remove('open');
+  });
+
+  // ── Pantry link modal (link ingredient → pantry item) ─────────────────────
+
+  const linkModal   = document.getElementById('pantry-link-modal');
+  const linkSearch  = document.getElementById('pantry-link-search');
+  const linkList    = document.getElementById('pantry-link-list');
+  const linkConfirm = document.getElementById('pantry-link-confirm');
+  const linkClear   = document.getElementById('pantry-link-clear');
+
+  let _linkIngredientId     = null;
+  let _linkSelectedPantryId = null;
+
+  function renderLinkList(items, query) {
+    const q = (query || '').toLowerCase();
+    const filtered = items.filter(it => it.name.toLowerCase().includes(q));
+    if (filtered.length === 0) {
+      linkList.innerHTML = `<li class="pantry-picker-empty">No pantry items found.</li>`;
+      return;
+    }
+    linkList.innerHTML = '';
+    filtered.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'pantry-picker-item';
+
+      const rb = document.createElement('input');
+      rb.type = 'radio';
+      rb.name = 'pantry-link-item';
+      rb.dataset.id = item.id;
+
+      // Pre-select the currently linked item
+      if (item.id === _linkSelectedPantryId) {
+        rb.checked = true;
+      }
+
+      rb.addEventListener('change', () => {
+        _linkSelectedPantryId = item.id;
+        linkConfirm.disabled = false;
+      });
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'pantry-picker-item-name';
+      nameEl.textContent = item.name;
+
+      li.appendChild(rb);
+      li.appendChild(nameEl);
+
+      if (item.price_unit_size) {
+        const d = document.createElement('span');
+        d.className = 'pantry-picker-item-detail';
+        d.textContent = item.price > 0
+          ? `€${item.price.toFixed(2)} / ${item.price_unit_size}`
+          : item.price_unit_size;
+        li.appendChild(d);
+      }
+
+      li.addEventListener('click', e => {
+        if (e.target !== rb) {
+          rb.checked = true;
+          _linkSelectedPantryId = item.id;
+          linkConfirm.disabled = false;
+        }
+      });
+      linkList.appendChild(li);
+    });
+  }
+
+  async function openLinkModal(ing) {
+    _linkIngredientId = ing.id;
+    // Pre-populate with current link so the button is immediately enabled
+    _linkSelectedPantryId = ing.pantry_item_id || null;
+    linkConfirm.disabled  = !_linkSelectedPantryId;
+    linkSearch.value      = '';
+
+    if (!pantryItemsCache) {
+      try { pantryItemsCache = await api.listPantryItems(); }
+      catch (_) { pantryItemsCache = []; }
+    }
+
+    renderLinkList(pantryItemsCache, ing.name);
+    linkModal.classList.add('open');
+    linkSearch.focus();
+  }
+
+  linkSearch?.addEventListener('input', e =>
+    renderLinkList(pantryItemsCache || [], e.target.value));
+
+  linkConfirm?.addEventListener('click', async () => {
+    if (!_linkIngredientId || !_linkSelectedPantryId) return;
+    linkConfirm.disabled = true;
+    try {
+      await api.linkIngredientPantry(recipeId, _linkIngredientId, _linkSelectedPantryId);
+      const updated = await api.getRecipe(recipeId);
+      recipe.ingredients = updated.ingredients;
+      pantryItems = await api.listPantryItems().catch(() => pantryItems);
+      renderIngredients();
+      renderHero();
+      linkModal.classList.remove('open');
+      showToast('Pantry item linked');
+    } catch (e) {
+      showToast('Failed to link: ' + e.message, true);
+      linkConfirm.disabled = false;
+    }
+  });
+
+  linkClear?.addEventListener('click', async () => {
+    if (!_linkIngredientId) return;
+    try {
+      await api.linkIngredientPantry(recipeId, _linkIngredientId, null);
+      const updated = await api.getRecipe(recipeId);
+      recipe.ingredients = updated.ingredients;
+      renderIngredients();
+      renderHero();
+      linkModal.classList.remove('open');
+      showToast('Pantry link cleared');
+    } catch (e) {
+      showToast('Failed to clear link: ' + e.message, true);
+    }
+  });
+
+  linkModal?.querySelectorAll('.modal-close').forEach(btn =>
+    btn.addEventListener('click', () => linkModal.classList.remove('open')));
+  linkModal?.addEventListener('click', e => {
+    if (e.target === linkModal) linkModal.classList.remove('open');
   });
 
   // ── Add step (edit mode) ──────────────────────────────────────────────────

@@ -41,6 +41,7 @@ func main() {
 
 	mux.HandleFunc("POST /api/recipes/{id}/ingredients", h.AddIngredient)
 	mux.HandleFunc("PUT /api/recipes/{id}/ingredients/{iid}", h.UpdateIngredient)
+	mux.HandleFunc("PATCH /api/recipes/{id}/ingredients/{iid}", h.PatchIngredient)
 	mux.HandleFunc("DELETE /api/recipes/{id}/ingredients/{iid}", h.DeleteIngredient)
 	mux.HandleFunc("PUT /api/recipes/{id}/ingredients/reorder", h.ReorderIngredients)
 

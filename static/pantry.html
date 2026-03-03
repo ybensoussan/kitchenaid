@@ -18,10 +18,8 @@
       display: flex;
       gap: 0.75rem;
       align-items: flex-end;
-      flex-wrap: wrap;
     }
-    .add-form .form-group { margin: 0; flex: 1; min-width: 120px; }
-    .add-form .form-group.grow2 { flex: 2; }
+    .add-form .form-group { margin: 0; flex: 1; }
     .pantry-table {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -42,14 +40,10 @@
       font-size: 0.9rem;
     }
     .pantry-item:last-child { border-bottom: none; }
-    .pantry-item-name { flex: 2; font-weight: 500; }
-    .pantry-item-amount { color: var(--brand); font-weight: 600; min-width: 3.5rem; text-align: right; white-space: nowrap; }
-    .pantry-item-unit { color: var(--muted); min-width: 2.5rem; }
-    .pantry-item-notes { color: var(--muted); font-size: 0.8rem; font-style: italic; flex: 1; }
-    .pantry-item-price { color: var(--muted); font-size: 0.8rem; min-width: 6rem; text-align: right; white-space: nowrap; }
+    .pantry-item-name { flex: 1; font-weight: 500; }
+    .pantry-item-price { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
     .pantry-item-edit { display: none; flex: 1; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .pantry-item-edit .form-input { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
-    .pantry-item-edit .form-select { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
     .price-lookup-btn { font-size: 0.8rem; padding: 0.15rem 0.4rem; color: var(--muted); }
     .price-lookup-btn:hover { color: var(--brand); }
 
@@ -75,41 +69,6 @@
     .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
     .empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
     .btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
-
-    /* Manage Units panel */
-    .units-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: calc(var(--radius)*1.5);
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-    }
-    .units-panel-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.75rem 1.25rem; cursor: pointer; user-select: none;
-      font-size: 0.875rem; font-weight: 600; color: var(--muted);
-    }
-    .units-panel-header:hover { color: var(--text); }
-    .units-panel-header .chevron { transition: transform 0.2s; font-style: normal; }
-    .units-panel.open .units-panel-header .chevron { transform: rotate(180deg); }
-    .units-panel-body { display: none; padding: 0.75rem 1.25rem 1rem; border-top: 1px solid var(--border); }
-    .units-panel.open .units-panel-body { display: block; }
-    .units-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; min-height: 2rem; }
-    .unit-chip {
-      display: inline-flex; align-items: center; gap: 0.3rem;
-      background: var(--hover-bg); border: 1px solid var(--border);
-      border-radius: 99px; padding: 0.2rem 0.6rem 0.2rem 0.75rem;
-      font-size: 0.8rem; font-weight: 500;
-    }
-    .unit-chip-remove {
-      background: none; border: none; cursor: pointer; padding: 0;
-      color: var(--muted); font-size: 0.9rem; line-height: 1;
-    }
-    .unit-chip-remove:hover { color: #dc2626; }
-    .units-add-row { display: flex; gap: 0.5rem; align-items: center; }
-    .units-add-row .form-input { width: 8rem; font-size: 0.85rem; padding: 0.35rem 0.6rem; }
-    .units-reset { font-size: 0.78rem; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0; margin-left: auto; }
-    .units-reset:hover { color: var(--brand); text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -130,39 +89,11 @@
     <h1 class="page-title"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Pantry</h1>
   </div>
 
-  <!-- Manage Units panel -->
-  <div class="units-panel" id="units-panel">
-    <div class="units-panel-header" id="units-panel-toggle">
-      <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg> Manage Units</span>
-      <i class="chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></i>
-    </div>
-    <div class="units-panel-body">
-      <div class="units-chips" id="units-chips"></div>
-      <div class="units-add-row">
-        <input type="text" id="unit-add-input" class="form-input" placeholder="New unit…" maxlength="16">
-        <button id="unit-add-btn" class="btn btn-secondary btn-sm">Add</button>
-        <button id="unit-reset-btn" class="units-reset">Reset to defaults</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Add form -->
   <div class="add-form">
-    <div class="form-group grow2">
+    <div class="form-group">
       <label class="form-label" for="new-name">Ingredient name *</label>
       <input type="text" id="new-name" class="form-input" placeholder="e.g. flour">
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="new-amount">Amount</label>
-      <input type="number" id="new-amount" class="form-input" placeholder="0" step="any" min="0">
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="new-unit">Unit</label>
-      <select id="new-unit" class="form-select"></select>
-    </div>
-    <div class="form-group grow2">
-      <label class="form-label" for="new-notes">Notes</label>
-      <input type="text" id="new-notes" class="form-input" placeholder="e.g. sifted">
     </div>
     <button id="add-btn" class="btn btn-primary">Add</button>
   </div>
@@ -170,7 +101,7 @@
   <!-- Search + list -->
   <div class="pantry-table">
     <div class="pantry-search">
-      <input type="search" id="search-input" class="search-input" placeholder="Search pantry…" autocomplete="off">
+      <input type="search" id="search-input" class="form-input" placeholder="Search pantry…" autocomplete="off" style="width:100%">
     </div>
     <ul class="pantry-list" id="pantry-list">
       <li class="empty-state">Loading…</li>
@@ -187,12 +118,17 @@
       <h2 class="modal-title">AH Price Lookup: <span id="ah-picker-name"></span></h2>
       <button class="modal-close btn btn-ghost btn-icon">✕</button>
     </div>
+    <div class="ah-picker-search">
+      <div style="display:flex;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid var(--border)">
+        <input id="ah-search-input" type="text" class="form-input" placeholder="Search AH…" style="flex:1;min-width:0">
+        <button id="ah-search-btn" class="btn btn-primary" style="white-space:nowrap;flex-shrink:0">Search</button>
+      </div>
+    </div>
     <div id="ah-picker-body"></div>
   </div>
 </div>
 
 <script src="/js/api.js"></script>
-<script src="/js/unit-list.js"></script>
 <script>
 (async () => {
   let items = [];
@@ -210,6 +146,21 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Strip leading quantity + unit tokens from an ingredient name.
+  // e.g. "2 cups flour" → "Flour", "100g chicken" → "Chicken"
+  function normalizeName(raw) {
+    let s = raw.trim();
+    // Remove leading number (including fractions like 1/2) followed by optional unit
+    const units = 'cups?|tbsps?|tsps?|tablespoons?|teaspoons?|kg|g|mg|ml|l|oz|lbs?|pounds?|ounces?|pieces?|cans?|cloves?|bunche?s?|slices?|sprigs?|pinch(?:es)?|dashes?|stuks?|stuk';
+    s = s.replace(new RegExp(`^[\\d¼½¾⅓⅔⅛⅜⅝⅞][\\d\\s/.]*(${units})\\.?\\s*`, 'i'), '');
+    // Remove any remaining leading plain number
+    s = s.replace(/^[\d][[\d\s/.]*\s+/, '');
+    // Remove parenthetical size info like "(14 oz)"
+    s = s.replace(/\s*\([^)]*\)/g, '');
+    s = s.trim();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
   async function loadItems() {
     try {
       items = await api.listPantryItems();
@@ -220,66 +171,10 @@
     renderList(document.getElementById('search-input').value);
   }
 
-  // ── Manage Units panel ────────────────────────────────────────────────────
-
-  function renderUnitChips() {
-    const chips = document.getElementById('units-chips');
-    chips.innerHTML = unitList.get().map(u => `
-      <span class="unit-chip">
-        ${escHtml(u)}
-        <button class="unit-chip-remove" data-unit="${escHtml(u)}" title="Remove ${escHtml(u)}">×</button>
-      </span>`).join('');
-    chips.querySelectorAll('.unit-chip-remove').forEach(btn => {
-      btn.addEventListener('click', () => {
-        unitList.remove(btn.dataset.unit);
-        renderUnitChips();
-        refreshAllUnitSelects();
-      });
-    });
-    // Re-populate the add-form select too
-    unitList.populateSelect(document.getElementById('new-unit'));
-  }
-
-  function refreshAllUnitSelects() {
-    unitList.populateSelect(document.getElementById('new-unit'));
-    // Re-render list so inline edit selects also reflect new unit list
-    renderList(document.getElementById('search-input').value);
-  }
-
-  document.getElementById('units-panel-toggle').addEventListener('click', () => {
-    document.getElementById('units-panel').classList.toggle('open');
-  });
-
-  document.getElementById('unit-add-btn').addEventListener('click', () => {
-    const inp = document.getElementById('unit-add-input');
-    const val = inp.value.trim();
-    if (!val) return;
-    if (!unitList.add(val)) { showToast(`"${val}" already in list`); return; }
-    inp.value = '';
-    renderUnitChips();
-    refreshAllUnitSelects();
-  });
-
-  document.getElementById('unit-add-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('unit-add-btn').click();
-  });
-
-  document.getElementById('unit-reset-btn').addEventListener('click', () => {
-    if (!confirm('Reset units to defaults?')) return;
-    unitList.reset();
-    renderUnitChips();
-    refreshAllUnitSelects();
-  });
-
-  renderUnitChips();
-
   function renderList(query = '') {
     const list = document.getElementById('pantry-list');
     const q = query.toLowerCase();
-    const filtered = items.filter(it =>
-      it.name.toLowerCase().includes(q) ||
-      (it.notes||'').toLowerCase().includes(q)
-    );
+    const filtered = items.filter(it => it.name.toLowerCase().includes(q));
 
     if (filtered.length === 0) {
       list.innerHTML = `<li class="empty-state">${items.length === 0 ? 'No pantry items yet. Add one above.' : 'No results.'}</li>`;
@@ -290,30 +185,19 @@
       <li class="pantry-item" data-id="${it.id}">
         <div class="pantry-item-view">
           <span class="pantry-item-name">${escHtml(it.name)}</span>
-          <span class="pantry-item-amount">${it.amount || ''}</span>
-          <span class="pantry-item-unit">${escHtml(it.unit)}</span>
-          <span class="pantry-item-notes">${escHtml(it.notes)}</span>
           <span class="pantry-item-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</span>
           <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" data-id="${it.id}" data-name="${escHtml(it.name)}" title="Look up price on AH">€</button>
           <button class="btn btn-ghost btn-icon edit-btn" title="Edit">✏</button>
           <button class="btn btn-ghost btn-icon delete-btn" title="Delete" style="color:#dc2626">🗑</button>
         </div>
         <div class="pantry-item-edit">
-          <input type="text"   class="form-input edit-name"   value="${escHtml(it.name)}"  placeholder="Name" style="flex:2;min-width:100px">
-          <input type="number" class="form-input edit-amount" value="${it.amount||''}"      placeholder="0" step="any" min="0" style="width:70px">
-          <select class="form-select edit-unit" style="width:80px" data-selected="${escHtml(it.unit)}"></select>
-          <input type="text"   class="form-input edit-notes"  value="${escHtml(it.notes)}" placeholder="Notes" style="flex:1;min-width:80px">
-          <input type="number" class="form-input edit-price"      value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€ price" style="width:80px">
-          <input type="text"   class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}"  placeholder="e.g. 1 kg" style="width:90px">
+          <input type="text" class="form-input edit-name" value="${escHtml(it.name)}" placeholder="Name" style="flex:1;min-width:120px">
+          <input type="number" class="form-input edit-price" value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€ price" style="width:90px">
+          <input type="text" class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}" placeholder="e.g. 300 g" style="width:100px">
           <button class="btn btn-primary btn-sm save-edit-btn">Save</button>
           <button class="btn btn-secondary btn-sm cancel-edit-btn">Cancel</button>
         </div>
       </li>`).join('');
-
-    // Populate unit selects dynamically
-    list.querySelectorAll('.edit-unit').forEach(sel => {
-      unitList.populateSelect(sel, sel.dataset.selected);
-    });
 
     list.querySelectorAll('.pantry-item').forEach(el => {
       const id = parseInt(el.dataset.id, 10);
@@ -329,15 +213,12 @@
       });
 
       el.querySelector('.save-edit-btn').addEventListener('click', async () => {
-        const name          = el.querySelector('.edit-name').value.trim();
-        const amount        = parseFloat(el.querySelector('.edit-amount').value) || 0;
-        const unit          = el.querySelector('.edit-unit').value;
-        const notes         = el.querySelector('.edit-notes').value.trim();
-        const price         = parseFloat(el.querySelector('.edit-price').value) || 0;
+        const name           = normalizeName(el.querySelector('.edit-name').value);
+        const price          = parseFloat(el.querySelector('.edit-price').value) || 0;
         const price_unit_size = el.querySelector('.edit-price-size').value.trim();
         if (!name) { showToast('Name is required', true); return; }
         try {
-          await api.updatePantryItem(id, { name, amount, unit, notes, price, price_unit_size });
+          await api.updatePantryItem(id, { name, price, price_unit_size });
           await loadItems();
         } catch (e) {
           showToast('Update failed: ' + e.message, true);
@@ -363,18 +244,12 @@
   // ── Add new item ──────────────────────────────────────────────────────────
 
   document.getElementById('add-btn').addEventListener('click', async () => {
-    const nameIn   = document.getElementById('new-name');
-    const amountIn = document.getElementById('new-amount');
-    const unitIn   = document.getElementById('new-unit');
-    const notesIn  = document.getElementById('new-notes');
-    const name     = nameIn.value.trim();
+    const nameIn = document.getElementById('new-name');
+    const name   = normalizeName(nameIn.value);
     if (!name) { showToast('Name is required', true); nameIn.focus(); return; }
-    const amount = parseFloat(amountIn.value) || 0;
-    const unit   = unitIn.value;
-    const notes  = notesIn.value.trim();
     try {
-      await api.createPantryItem({ name, amount, unit, notes });
-      nameIn.value = ''; amountIn.value = ''; unitIn.value = ''; notesIn.value = '';
+      await api.createPantryItem({ name });
+      nameIn.value = '';
       nameIn.focus();
       await loadItems();
     } catch (e) {
@@ -394,67 +269,83 @@
 
   // ── AH Price Picker ───────────────────────────────────────────────────────
 
-  const ahModal     = document.getElementById('ah-picker-modal');
-  const ahPickerName = document.getElementById('ah-picker-name');
-  const ahPickerBody = document.getElementById('ah-picker-body');
-  let ahTargetId    = null;
-  let ahTargetItem  = null;
+  const ahModal       = document.getElementById('ah-picker-modal');
+  const ahPickerName  = document.getElementById('ah-picker-name');
+  const ahPickerBody  = document.getElementById('ah-picker-body');
+  const ahSearchInput = document.getElementById('ah-search-input');
+  const ahSearchBtn   = document.getElementById('ah-search-btn');
+  let ahTargetId   = null;
+  let ahTargetItem = null;
 
   ahModal.querySelector('.modal-close').addEventListener('click', () => ahModal.classList.remove('open'));
   ahModal.addEventListener('click', e => { if (e.target === ahModal) ahModal.classList.remove('open'); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') ahModal.classList.remove('open'); });
 
+  function setAHResults(html) {
+    ahPickerBody.innerHTML = html;
+  }
+
+  function renderAHProducts(products) {
+    setAHResults(`<div class="ah-product-list">${products.map((p, i) =>
+      `<div class="ah-product-item" data-idx="${i}">
+        ${p.imageUrl
+          ? `<img class="ah-product-thumb" src="${escHtml(p.imageUrl)}" alt="" loading="lazy">`
+          : `<div class="ah-product-thumb-placeholder"></div>`}
+        <div class="ah-product-info">
+          <div class="ah-product-title">${escHtml(p.title)}</div>
+          <div class="ah-product-size">${escHtml(p.salesUnitSize)}${p.unitPriceDesc ? ' · ' + escHtml(p.unitPriceDesc) : ''}</div>
+        </div>
+        <div class="ah-product-price">€${p.price.toFixed(2)}</div>
+      </div>`
+    ).join('')}</div>`);
+
+    ahPickerBody.querySelectorAll('.ah-product-item').forEach(el => {
+      const p = products[parseInt(el.dataset.idx, 10)];
+      el.addEventListener('click', async () => {
+        ahModal.classList.remove('open');
+        try {
+          const name = ahTargetItem?.name || '';
+          await api.updatePantryItem(ahTargetId, {
+            name,
+            price:           p.price,
+            price_unit_size: p.salesUnitSize,
+          });
+          await loadItems();
+          showToast(`Price set: €${p.price.toFixed(2)} / ${p.salesUnitSize}`);
+        } catch (e) {
+          showToast('Failed to set price: ' + e.message, true);
+        }
+      });
+    });
+  }
+
+  async function runAHSearch(q) {
+    if (!q) return;
+    setAHResults(`<div class="ah-picker-loading"><div class="spinner"></div> Searching AH…</div>`);
+    try {
+      const data = await api.searchAH(q);
+      const products = data.products || [];
+      if (products.length === 0) {
+        setAHResults(`<p style="padding:1.5rem;color:var(--muted);text-align:center;font-size:.9rem">No results found on AH.</p>`);
+      } else {
+        renderAHProducts(products);
+      }
+    } catch (e) {
+      setAHResults(`<p style="padding:1.5rem;color:#dc2626;text-align:center;font-size:.9rem">${escHtml(e.message)}</p>`);
+    }
+  }
+
+  ahSearchBtn.addEventListener('click', () => runAHSearch(ahSearchInput.value.trim()));
+  ahSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runAHSearch(ahSearchInput.value.trim()); });
+
   async function openAHPicker(itemId, itemName) {
     ahTargetId   = itemId;
     ahTargetItem = items.find(it => it.id === itemId);
     ahPickerName.textContent = itemName;
-    ahPickerBody.innerHTML   = `<div class="ah-picker-loading"><div class="spinner"></div> Searching AH…</div>`;
+    ahSearchInput.value = itemName;
     ahModal.classList.add('open');
-
-    try {
-      const data = await api.searchAH(itemName);
-      const products = data.products || [];
-      if (products.length === 0) {
-        ahPickerBody.innerHTML = `<p style="padding:1.25rem;color:var(--muted);text-align:center">No results found on AH.</p>`;
-        return;
-      }
-      ahPickerBody.innerHTML = `<div class="ah-product-list">${products.map((p, i) =>
-        `<div class="ah-product-item" data-idx="${i}">
-          ${p.imageUrl
-            ? `<img class="ah-product-thumb" src="${escHtml(p.imageUrl)}" alt="" loading="lazy">`
-            : `<div class="ah-product-thumb-placeholder"></div>`}
-          <div class="ah-product-info">
-            <div class="ah-product-title">${escHtml(p.title)}</div>
-            <div class="ah-product-size">${escHtml(p.salesUnitSize)}${p.unitPriceDesc ? ' · ' + escHtml(p.unitPriceDesc) : ''}</div>
-          </div>
-          <div class="ah-product-price">€${p.price.toFixed(2)}</div>
-        </div>`
-      ).join('')}</div>`;
-
-      ahPickerBody.querySelectorAll('.ah-product-item').forEach(el => {
-        const p = products[parseInt(el.dataset.idx, 10)];
-        el.addEventListener('click', async () => {
-          ahModal.classList.remove('open');
-          try {
-            const base = ahTargetItem || {};
-            await api.updatePantryItem(ahTargetId, {
-              name:           base.name   || '',
-              amount:         base.amount || 0,
-              unit:           base.unit   || '',
-              notes:          base.notes  || '',
-              price:          p.price,
-              price_unit_size: p.salesUnitSize,
-            });
-            await loadItems();
-            showToast(`Price set: €${p.price.toFixed(2)} / ${p.salesUnitSize}`);
-          } catch (e) {
-            showToast('Failed to set price: ' + e.message, true);
-          }
-        });
-      });
-    } catch (e) {
-      ahPickerBody.innerHTML = `<p style="padding:1.25rem;color:#dc2626;text-align:center">${escHtml(e.message)}</p>`;
-    }
+    ahSearchInput.select();
+    await runAHSearch(itemName);
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────

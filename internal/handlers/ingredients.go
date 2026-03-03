@@ -67,6 +67,29 @@ func (h *Handler) DeleteIngredient(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
+func (h *Handler) PatchIngredient(w http.ResponseWriter, r *http.Request) {
+	recipeID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid recipe id")
+		return
+	}
+	iid, err := strconv.ParseInt(r.PathValue("iid"), 10, 64)
+	if err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid ingredient id")
+		return
+	}
+	var req models.LinkIngredientPantryRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	if err := h.Store.LinkIngredientPantry(iid, recipeID, req.PantryItemID); err != nil {
+		h.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 func (h *Handler) ReorderIngredients(w http.ResponseWriter, r *http.Request) {
 	recipeID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {

@@ -32,10 +32,11 @@ const api = {
   reorderRecipes: (ids)     => api.put('/api/recipes/reorder', { ids }),
 
   // Ingredients
-  addIngredient:    (rid, data)       => api.post(`/api/recipes/${rid}/ingredients`, data),
-  updateIngredient: (rid, iid, data)  => api.put(`/api/recipes/${rid}/ingredients/${iid}`, data),
-  deleteIngredient: (rid, iid)        => api.delete(`/api/recipes/${rid}/ingredients/${iid}`),
-  reorderIngredients: (rid, ids)      => api.put(`/api/recipes/${rid}/ingredients/reorder`, { ids }),
+  addIngredient:         (rid, data)            => api.post(`/api/recipes/${rid}/ingredients`, data),
+  updateIngredient:      (rid, iid, data)        => api.put(`/api/recipes/${rid}/ingredients/${iid}`, data),
+  linkIngredientPantry:  (rid, iid, pantryId)    => api.patch(`/api/recipes/${rid}/ingredients/${iid}`, { pantry_item_id: pantryId }),
+  deleteIngredient:      (rid, iid)              => api.delete(`/api/recipes/${rid}/ingredients/${iid}`),
+  reorderIngredients:    (rid, ids)              => api.put(`/api/recipes/${rid}/ingredients/reorder`, { ids }),
 
   // Steps
   addStep:    (rid, data)      => api.post(`/api/recipes/${rid}/steps`, data),

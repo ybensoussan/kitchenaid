@@ -1,0 +1,26 @@
+[     180ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  694230ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  810037ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  810583ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  810757ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  810901ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  856166ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  857039ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  857223ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  857353ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0
+[  952010ms] TypeError: Cannot set properties of null (setting 'disabled')
+    at openLinkModal (http://localhost:8888/js/recipe.js:786:27)
+    at HTMLButtonElement.<anonymous> (http://localhost:8888/js/recipe.js:448:18)
+[  954791ms] TypeError: Cannot set properties of null (setting 'disabled')
+    at openLinkModal (http://localhost:8888/js/recipe.js:786:27)
+    at HTMLButtonElement.<anonymous> (http://localhost:8888/js/recipe.js:448:18)
+[  955942ms] TypeError: Cannot set properties of null (setting 'disabled')
+    at openLinkModal (http://localhost:8888/js/recipe.js:786:27)
+    at HTMLButtonElement.<anonymous> (http://localhost:8888/js/recipe.js:448:18)
+[  956260ms] TypeError: Cannot set properties of null (setting 'disabled')
+    at openLinkModal (http://localhost:8888/js/recipe.js:786:27)
+    at HTMLButtonElement.<anonymous> (http://localhost:8888/js/recipe.js:448:18)
+[  956461ms] TypeError: Cannot set properties of null (setting 'disabled')
+    at openLinkModal (http://localhost:8888/js/recipe.js:786:27)
+    at HTMLButtonElement.<anonymous> (http://localhost:8888/js/recipe.js:448:18)
+[  957668ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8888/favicon.ico:0

@@ -88,10 +88,7 @@ const pantryReview = (() => {
     const indices = checked.map(cb => parseInt(cb.id.replace('pr-ing-', ''), 10));
 
     // We need to recover the ingredient objects — store them on the list items
-    const items = indices.map(i => {
-      const ing = _currentIngredients[i];
-      return { name: ing.name, amount: ing.amount || null, unit: ing.unit || '', notes: ing.notes || '' };
-    });
+    const items = indices.map(i => ({ name: _currentIngredients[i].name }));
 
     confirm.disabled = true;
     try {

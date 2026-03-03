@@ -60,6 +60,7 @@ func (s *Store) migrate() error {
 		`ALTER TABLE recipes ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
 		`ALTER TABLE pantry_items ADD COLUMN price           REAL NOT NULL DEFAULT 0`,
 		`ALTER TABLE pantry_items ADD COLUMN price_unit_size TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE ingredients ADD COLUMN pantry_item_id INTEGER REFERENCES pantry_items(id) ON DELETE SET NULL`,
 	} {
 		s.db.Exec(stmt) //nolint:errcheck
 	}
@@ -283,7 +284,7 @@ func (s *Store) ReorderRecipes(ids []int64) error {
 
 func (s *Store) GetIngredients(recipeID int64) ([]models.Ingredient, error) {
 	rows, err := s.db.Query(`
-		SELECT id, recipe_id, sort_order, name, amount, unit, notes
+		SELECT id, recipe_id, sort_order, name, amount, unit, notes, pantry_item_id
 		FROM ingredients WHERE recipe_id=? ORDER BY sort_order`, recipeID)
 	if err != nil {
 		return nil, err
@@ -293,12 +294,18 @@ func (s *Store) GetIngredients(recipeID int64) ([]models.Ingredient, error) {
 	var ings []models.Ingredient
 	for rows.Next() {
 		var ing models.Ingredient
-		if err := rows.Scan(&ing.ID, &ing.RecipeID, &ing.SortOrder, &ing.Name, &ing.Amount, &ing.Unit, &ing.Notes); err != nil {
+		if err := rows.Scan(&ing.ID, &ing.RecipeID, &ing.SortOrder, &ing.Name, &ing.Amount, &ing.Unit, &ing.Notes, &ing.PantryItemID); err != nil {
 			return nil, err
 		}
 		ings = append(ings, ing)
 	}
 	return ings, rows.Err()
+}
+
+func (s *Store) LinkIngredientPantry(id, recipeID int64, pantryItemID *int64) error {
+	_, err := s.db.Exec(`UPDATE ingredients SET pantry_item_id=? WHERE id=? AND recipe_id=?`,
+		pantryItemID, id, recipeID)
+	return err
 }
 
 func (s *Store) AddIngredient(recipeID int64, inp models.IngredientInput) (*models.Ingredient, error) {

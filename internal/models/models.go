@@ -24,13 +24,14 @@ type TagSuggestionResponse struct {
 }
 
 type Ingredient struct {
-	ID        int64   `json:"id"`
-	RecipeID  int64   `json:"recipe_id"`
-	SortOrder int     `json:"sort_order"`
-	Name      string  `json:"name"`
-	Amount    float64 `json:"amount"`
-	Unit      string  `json:"unit"`
-	Notes     string  `json:"notes"`
+	ID            int64   `json:"id"`
+	RecipeID      int64   `json:"recipe_id"`
+	SortOrder     int     `json:"sort_order"`
+	Name          string  `json:"name"`
+	Amount        float64 `json:"amount"`
+	Unit          string  `json:"unit"`
+	Notes         string  `json:"notes"`
+	PantryItemID  *int64  `json:"pantry_item_id"`
 }
 
 type Step struct {
@@ -56,11 +57,16 @@ type CreateRecipeRequest struct {
 }
 
 type IngredientInput struct {
-	SortOrder int     `json:"sort_order"`
-	Name      string  `json:"name"`
-	Amount    float64 `json:"amount"`
-	Unit      string  `json:"unit"`
-	Notes     string  `json:"notes"`
+	SortOrder    int     `json:"sort_order"`
+	Name         string  `json:"name"`
+	Amount       float64 `json:"amount"`
+	Unit         string  `json:"unit"`
+	Notes        string  `json:"notes"`
+	PantryItemID *int64  `json:"pantry_item_id"`
+}
+
+type LinkIngredientPantryRequest struct {
+	PantryItemID *int64 `json:"pantry_item_id"`
 }
 
 type StepInput struct {
@@ -90,9 +96,6 @@ type ImportHTMLRequest struct {
 type PantryItem struct {
 	ID            int64     `json:"id"`
 	Name          string    `json:"name"`
-	Amount        float64   `json:"amount"`
-	Unit          string    `json:"unit"`
-	Notes         string    `json:"notes"`
 	Price         float64   `json:"price"`
 	PriceUnitSize string    `json:"price_unit_size"`
 	CreatedAt     time.Time `json:"created_at"`
@@ -100,9 +103,6 @@ type PantryItem struct {
 
 type PantryItemInput struct {
 	Name          string  `json:"name"`
-	Amount        float64 `json:"amount"`
-	Unit          string  `json:"unit"`
-	Notes         string  `json:"notes"`
 	Price         float64 `json:"price"`
 	PriceUnitSize string  `json:"price_unit_size"`
 }
