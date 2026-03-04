@@ -107,6 +107,15 @@ type PantryItemInput struct {
 	PriceUnitSize string  `json:"price_unit_size"`
 }
 
+type UnlinkedIngredient struct {
+	ID          int64   `json:"id"`
+	RecipeID    int64   `json:"recipe_id"`
+	RecipeTitle string  `json:"recipe_title"`
+	Name        string  `json:"name"`
+	Amount      float64 `json:"amount"`
+	Unit        string  `json:"unit"`
+}
+
 type UploadResponse struct {
 	URL string `json:"url"`
 }

@@ -73,11 +73,15 @@ func main() {
 	mux.HandleFunc("GET /api/db/export",     h.ExportDB)
 	mux.HandleFunc("POST /api/db/import",    h.ImportDB)
 
-	mux.HandleFunc("GET /api/pantry",          h.ListPantryItems)
-	mux.HandleFunc("POST /api/pantry",         h.CreatePantryItem)
-	mux.HandleFunc("POST /api/pantry/batch",   h.BatchAddPantryItems)
-	mux.HandleFunc("PUT /api/pantry/{id}",    h.UpdatePantryItem)
-	mux.HandleFunc("DELETE /api/pantry/{id}", h.DeletePantryItem)
+	mux.HandleFunc("GET /api/pantry",             h.ListPantryItems)
+	mux.HandleFunc("POST /api/pantry",            h.CreatePantryItem)
+	mux.HandleFunc("POST /api/pantry/batch",      h.BatchAddPantryItems)
+	mux.HandleFunc("POST /api/pantry/merge",      h.MergePantryItems)
+	mux.HandleFunc("PUT /api/pantry/{id}",        h.UpdatePantryItem)
+	mux.HandleFunc("DELETE /api/pantry/{id}",     h.DeletePantryItem)
+
+	mux.HandleFunc("GET /api/ingredients/unlinked", h.GetUnlinkedIngredients)
+	mux.HandleFunc("POST /api/ai/smart-match",      h.SmartMatch)
 
 	mux.HandleFunc("GET /api/ah/search", h.SearchAH)
 

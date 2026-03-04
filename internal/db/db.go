@@ -302,6 +302,58 @@ func (s *Store) GetIngredients(recipeID int64) ([]models.Ingredient, error) {
 	return ings, rows.Err()
 }
 
+// GetRecipesByPantryItem returns the distinct recipe titles that link to a pantry item.
+func (s *Store) GetRecipesByPantryItem(pantryItemID int64) ([]string, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT r.title
+		FROM ingredients i
+		JOIN recipes r ON r.id = i.recipe_id
+		WHERE i.pantry_item_id = ?
+		ORDER BY r.title`, pantryItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var titles []string
+	for rows.Next() {
+		var t string
+		if err := rows.Scan(&t); err != nil {
+			return nil, err
+		}
+		titles = append(titles, t)
+	}
+	if titles == nil {
+		titles = []string{}
+	}
+	return titles, rows.Err()
+}
+
+func (s *Store) GetUnlinkedIngredients() ([]models.UnlinkedIngredient, error) {
+	rows, err := s.db.Query(`
+		SELECT i.id, i.recipe_id, r.title, i.name, i.amount, i.unit
+		FROM ingredients i
+		JOIN recipes r ON r.id = i.recipe_id
+		WHERE i.pantry_item_id IS NULL
+		ORDER BY r.title, i.sort_order`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ings []models.UnlinkedIngredient
+	for rows.Next() {
+		var ing models.UnlinkedIngredient
+		if err := rows.Scan(&ing.ID, &ing.RecipeID, &ing.RecipeTitle, &ing.Name, &ing.Amount, &ing.Unit); err != nil {
+			return nil, err
+		}
+		ings = append(ings, ing)
+	}
+	if ings == nil {
+		ings = []models.UnlinkedIngredient{}
+	}
+	return ings, rows.Err()
+}
+
 func (s *Store) LinkIngredientPantry(id, recipeID int64, pantryItemID *int64) error {
 	_, err := s.db.Exec(`UPDATE ingredients SET pantry_item_id=? WHERE id=? AND recipe_id=?`,
 		pantryItemID, id, recipeID)

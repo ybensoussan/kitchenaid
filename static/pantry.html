@@ -76,6 +76,25 @@
     }
     .pantry-filter-btn:hover { background: var(--hover-bg); color: var(--text); }
     .pantry-filter-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .sm-section-title { font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:.5rem 0 .25rem;margin-top:.25rem }
+    .sm-row { border-bottom:1px solid var(--border);padding:.6rem 0 }
+    .sm-row:last-child { border-bottom:none }
+    .sm-ingredient-label { font-size:.9rem;font-weight:500 }
+    .sm-recipe-label { font-size:.78rem;color:var(--muted) }
+    .sm-options { margin-top:.35rem;display:flex;flex-direction:column;gap:.25rem;padding-left:1.4rem }
+    .sm-option { display:flex;align-items:center;gap:.45rem;font-size:.85rem }
+    .sm-option input[type=radio] { flex-shrink:0 }
+    .conf-badge { font-size:.68rem;padding:.1rem .35rem;border-radius:999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em }
+    .conf-high   { background:#dcfce7;color:#166534 }
+    .conf-medium { background:#fef9c3;color:#854d0e }
+    .conf-low    { background:#fee2e2;color:#991b1b }
+    .sm-search-box { margin-top:.35rem;padding-left:1.4rem }
+    .sm-search-results { list-style:none;padding:0;margin:.25rem 0 0;border:1px solid var(--border);border-radius:var(--radius);max-height:140px;overflow-y:auto }
+    .sm-search-result { padding:.3rem .6rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border) }
+    .sm-search-result:last-child { border-bottom:none }
+    .sm-search-result:hover { background:var(--hover-bg) }
+    .sm-dup-names { display:flex;align-items:center;gap:.5rem;font-size:.88rem;margin-bottom:.3rem }
+    .sm-dup-keep { display:flex;gap:.75rem;font-size:.84rem;padding-left:1.4rem }
   </style>
 </head>
 <body>
@@ -95,6 +114,7 @@
   <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <h1 class="page-title"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Pantry</h1>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button id="smart-match-btn" class="btn btn-primary">✦ Smart Match</button>
       <button id="refresh-unpriced-btn" class="btn btn-secondary">&#x21BB; Price Unpriced</button>
       <button id="refresh-prices-btn" class="btn btn-secondary">&#x21BB; Refresh All Prices</button>
     </div>
@@ -141,6 +161,21 @@
       </div>
     </div>
     <div id="ah-picker-body"></div>
+  </div>
+</div>
+
+<!-- Smart Match Modal -->
+<div id="smart-match-modal" class="modal-overlay">
+  <div class="modal" style="width:min(680px,96vw)">
+    <div class="modal-header">
+      <h2 class="modal-title">✦ Smart Match</h2>
+      <button class="modal-close btn btn-ghost btn-icon" id="smart-match-close">✕</button>
+    </div>
+    <div id="smart-match-body" style="padding:1rem 1.25rem;min-height:140px;max-height:65vh;overflow-y:auto"></div>
+    <div id="smart-match-footer" style="display:none;padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.5rem">
+      <button id="smart-match-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="smart-match-apply" class="btn btn-primary">Apply selected</button>
+    </div>
   </div>
 </div>
 
@@ -397,6 +432,408 @@
     ahSearchInput.select();
     await runAHSearch(itemName);
   }
+
+  // ── Smart Match ───────────────────────────────────────────────────────────
+
+  const smModal  = document.getElementById('smart-match-modal');
+  const smBody   = document.getElementById('smart-match-body');
+  const smFooter = document.getElementById('smart-match-footer');
+  const smApply  = document.getElementById('smart-match-apply');
+  const smCancel = document.getElementById('smart-match-cancel');
+
+  document.getElementById('smart-match-close').addEventListener('click', () => smModal.classList.remove('open'));
+  smModal.addEventListener('click', e => { if (e.target === smModal) smModal.classList.remove('open'); });
+  smCancel.addEventListener('click', () => smModal.classList.remove('open'));
+
+  // State: arrays of enriched match/duplicate objects used when applying
+  let _smMatches    = []; // {ingredient, recipe_title, suggestions, selectedPantryId, checked, showSearch, manualId, searchQuery}
+  let _smDuplicates = []; // {keep, merge, keep_id, merge_id, reason, confidence, checked, userKeepId}
+  let _smAllPantry  = [];
+
+  function smLoading(msg) {
+    smFooter.style.display = 'none';
+    smBody.innerHTML = `<div style="padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;color:var(--muted)">
+      <div class="spinner"></div>
+      <div style="font-size:.9rem">${escHtml(msg)}</div>
+    </div>`;
+  }
+
+  function smError(msg) {
+    smBody.innerHTML = `<p style="padding:1.5rem;color:#dc2626;font-size:.9rem">${escHtml(msg)}</p>`;
+  }
+
+  async function openSmartMatch() {
+    smModal.classList.add('open');
+    smLoading('Fetching ingredients and pantry items…');
+
+    let unlinked, pantry;
+    try {
+      [unlinked, pantry] = await Promise.all([api.getUnlinkedIngredients(), api.listPantryItems()]);
+    } catch(e) { smError(e.message); return; }
+
+    _smAllPantry = pantry;
+
+    if (unlinked.length === 0 && pantry.length < 2) {
+      smBody.innerHTML = `<p style="padding:1.5rem;color:var(--muted);font-size:.9rem">All ingredients are already linked and no duplicate pantry items found.</p>`;
+      return;
+    }
+
+    smLoading(`Asking AI to match ${unlinked.length} unlinked ingredient${unlinked.length===1?'':'s'} with ${pantry.length} pantry item${pantry.length===1?'':'s'}…`);
+
+    let result;
+    try {
+      result = await api.smartMatch({
+        ingredients: unlinked.map(i => ({ id: i.id, recipe_id: i.recipe_id, name: i.name, amount: i.amount, unit: i.unit })),
+        pantry_items: pantry.map(p => ({ id: p.id, name: p.name })),
+      });
+    } catch(e) { smError('AI matching failed: ' + e.message); return; }
+
+    const pantryById = new Map(pantry.map(p => [p.id, p]));
+    const ingById    = new Map(unlinked.map(i => [i.id, i]));
+
+    _smMatches = (result.matches || [])
+      .filter(m => m.suggestions && m.suggestions.length > 0)
+      .map(m => {
+        const ing = ingById.get(m.ingredient_id);
+        if (!ing) return null;
+        const suggestions = m.suggestions
+          .map(s => ({ ...s, pantry: pantryById.get(s.pantry_item_id) }))
+          .filter(s => s.pantry);
+        if (!suggestions.length) return null;
+        return { ingredient: ing, suggestions, selectedPantryId: suggestions[0].pantry_item_id,
+                 checked: true, showSearch: false, manualId: null, searchQuery: '' };
+      })
+      .filter(Boolean);
+
+    _smDuplicates = (result.duplicates || [])
+      .map(d => {
+        const keep = pantryById.get(d.keep_id), merge = pantryById.get(d.merge_id);
+        if (!keep || !merge) return null;
+        return { keep, merge, keep_id: d.keep_id, merge_id: d.merge_id,
+                 reason: d.reason, confidence: d.confidence,
+                 keepRecipes: d.keep_recipes || [], mergeRecipes: d.merge_recipes || [],
+                 checked: d.confidence === 'high', userKeepId: d.keep_id };
+      })
+      .filter(Boolean);
+
+    renderSmReview();
+  }
+
+  function confBadge(c) {
+    const cls = c === 'high' ? 'conf-high' : c === 'medium' ? 'conf-medium' : 'conf-low';
+    return `<span class="conf-badge ${cls}">${escHtml(c)}</span>`;
+  }
+
+  function renderSmReview() {
+    if (_smMatches.length === 0 && _smDuplicates.length === 0) {
+      smBody.innerHTML = `<p style="padding:1.5rem;color:var(--muted);font-size:.9rem">No matches or duplicates found. Your pantry is already well-organised!</p>`;
+      smFooter.style.display = 'none';
+      return;
+    }
+
+    smBody.innerHTML = '';
+
+    // ── Duplicates section ─────────────────────────────────────────────────
+    if (_smDuplicates.length > 0) {
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="sm-section-title">⚠ Possible Pantry Duplicates (${_smDuplicates.length})</div>`;
+
+      _smDuplicates.forEach((d, di) => {
+        const row = document.createElement('div');
+        row.className = 'sm-row';
+        row.style.opacity = d.checked ? '1' : '.55';
+
+        const topLine = document.createElement('div');
+        topLine.style.cssText = 'display:flex;align-items:center;gap:.5rem';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.checked = d.checked;
+        cb.addEventListener('change', () => { d.checked = cb.checked; row.style.opacity = d.checked ? '1' : '.55'; });
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'sm-dup-names';
+        nameDiv.innerHTML = `<strong>${escHtml(d.keep.name)}</strong><span style="color:var(--muted)">+</span><strong>${escHtml(d.merge.name)}</strong>${confBadge(d.confidence)}`;
+
+        const reason = document.createElement('div');
+        reason.style.cssText = 'font-size:.78rem;color:var(--muted);padding-left:1.4rem;margin-bottom:.25rem';
+        reason.textContent = d.reason;
+
+        topLine.appendChild(cb);
+        topLine.appendChild(nameDiv);
+
+        const keepRow = document.createElement('div');
+        keepRow.className = 'sm-dup-keep';
+        keepRow.innerHTML = `<span style="color:var(--muted);font-size:.78rem;flex-shrink:0">Keep:</span>`;
+
+        [
+          { id: d.keep_id,  name: d.keep.name,  recipes: d.keepRecipes },
+          { id: d.merge_id, name: d.merge.name, recipes: d.mergeRecipes },
+        ].forEach(opt => {
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;flex-direction:column;gap:.1rem';
+
+          const lbl = document.createElement('label');
+          lbl.style.cssText = 'display:flex;align-items:center;gap:.3rem;cursor:pointer';
+          const radio = document.createElement('input');
+          radio.type = 'radio'; radio.name = `dup-keep-${di}`; radio.value = opt.id;
+          radio.checked = opt.id === d.userKeepId;
+          radio.addEventListener('change', () => { d.userKeepId = opt.id; });
+          lbl.appendChild(radio);
+          lbl.appendChild(document.createTextNode(opt.name));
+          wrap.appendChild(lbl);
+
+          if (opt.recipes.length > 0) {
+            const recipeHint = document.createElement('div');
+            recipeHint.style.cssText = 'font-size:.72rem;color:var(--muted);padding-left:1.2rem;line-height:1.4';
+            recipeHint.textContent = opt.recipes.join(', ');
+            wrap.appendChild(recipeHint);
+          }
+
+          keepRow.appendChild(wrap);
+        });
+
+        row.appendChild(topLine);
+        row.appendChild(reason);
+        row.appendChild(keepRow);
+        sec.appendChild(row);
+      });
+
+      smBody.appendChild(sec);
+    }
+
+    // ── Ingredient matches section ─────────────────────────────────────────
+    if (_smMatches.length > 0) {
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="sm-section-title">🔗 Ingredient Links (${_smMatches.length})</div>`;
+
+      _smMatches.forEach((m, mi) => {
+        const ing = m.ingredient;
+        const row = document.createElement('div');
+        row.className = 'sm-row';
+        row.style.opacity = m.checked ? '1' : '.55';
+
+        // ── Top line: checkbox + ingredient label + re-search button ──────
+        const topLine = document.createElement('div');
+        topLine.style.cssText = 'display:flex;align-items:flex-start;gap:.5rem';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.checked = m.checked; cb.style.marginTop = '.2rem';
+        cb.addEventListener('change', () => { m.checked = cb.checked; row.style.opacity = m.checked ? '1' : '.55'; });
+
+        const labelWrap = document.createElement('div');
+        labelWrap.style.flex = '1';
+        labelWrap.innerHTML = `<div class="sm-ingredient-label">${escHtml([ing.amount && ing.amount > 0 ? ing.amount : '', ing.unit, ing.name].filter(Boolean).join(' '))}</div>
+          <div class="sm-recipe-label">${escHtml(ing.recipe_title)}</div>`;
+
+        const reSearchBtn = document.createElement('button');
+        reSearchBtn.className = 'btn btn-ghost btn-sm';
+        reSearchBtn.style.cssText = 'font-size:.75rem;white-space:nowrap;flex-shrink:0;margin-top:.05rem';
+        reSearchBtn.title = 'Re-run AI search for this ingredient';
+        reSearchBtn.textContent = '↻ Re-search';
+
+        topLine.appendChild(cb);
+        topLine.appendChild(labelWrap);
+        topLine.appendChild(reSearchBtn);
+        row.appendChild(topLine);
+
+        // ── Radio options ──────────────────────────────────────────────────
+        const optList = document.createElement('div');
+        optList.className = 'sm-options';
+        const radioName = `sm-match-${mi}`;
+
+        // Helper: hide/show extra boxes
+        let searchBox, addBox;
+
+        function selectMode(mode) {
+          if (searchBox) searchBox.style.display = mode === 'search' ? '' : 'none';
+          if (addBox)    addBox.style.display    = mode === 'add'    ? '' : 'none';
+        }
+
+        // AI suggestions
+        m.suggestions.forEach(s => {
+          const opt = document.createElement('label');
+          opt.className = 'sm-option';
+          const r = document.createElement('input');
+          r.type = 'radio'; r.name = radioName; r.value = s.pantry_item_id;
+          r.checked = s.pantry_item_id === m.selectedPantryId && !m.showSearch && !m.showAdd;
+          r.addEventListener('change', () => {
+            m.selectedPantryId = s.pantry_item_id; m.showSearch = false; m.showAdd = false;
+            m.manualId = null; selectMode('none');
+          });
+          opt.appendChild(r);
+          opt.innerHTML += `${escHtml(s.pantry.name)} ${confBadge(s.confidence)} <span style="font-size:.75rem;color:var(--muted)">${escHtml(s.reason)}</span>`;
+          optList.appendChild(opt);
+        });
+
+        // "Search existing pantry" option
+        const manualOpt = document.createElement('label');
+        manualOpt.className = 'sm-option';
+        const manualRadio = document.createElement('input');
+        manualRadio.type = 'radio'; manualRadio.name = radioName; manualRadio.value = 'manual';
+        manualRadio.checked = m.showSearch;
+        manualRadio.addEventListener('change', () => {
+          m.showSearch = true; m.showAdd = false; m.selectedPantryId = null; m.manualId = null;
+          selectMode('search'); searchInput.focus();
+        });
+        manualOpt.appendChild(manualRadio);
+        manualOpt.appendChild(document.createTextNode('Search existing pantry…'));
+        optList.appendChild(manualOpt);
+
+        // "Add new pantry item" option
+        const addOpt = document.createElement('label');
+        addOpt.className = 'sm-option';
+        const addRadio = document.createElement('input');
+        addRadio.type = 'radio'; addRadio.name = radioName; addRadio.value = 'add';
+        addRadio.checked = m.showAdd;
+        addRadio.addEventListener('change', () => {
+          m.showAdd = true; m.showSearch = false; m.selectedPantryId = null; m.manualId = null;
+          selectMode('add'); addNameInput.focus(); addNameInput.select();
+        });
+        addOpt.appendChild(addRadio);
+        addOpt.appendChild(document.createTextNode('Add new pantry item…'));
+        optList.appendChild(addOpt);
+
+        // ── Search box ──────────────────────────────────────────────────────
+        searchBox = document.createElement('div');
+        searchBox.className = 'sm-search-box';
+        searchBox.style.display = m.showSearch ? '' : 'none';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text'; searchInput.className = 'form-input';
+        searchInput.placeholder = 'Filter pantry items…';
+        searchInput.style.cssText = 'font-size:.85rem;padding:.3rem .5rem;width:100%';
+        searchInput.value = m.searchQuery;
+
+        const resultsList = document.createElement('ul');
+        resultsList.className = 'sm-search-results';
+
+        function renderSearchResults(q) {
+          m.searchQuery = q;
+          const filtered = _smAllPantry.filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+          resultsList.innerHTML = filtered.length
+            ? filtered.map(p => `<li class="sm-search-result${m.manualId===p.id?' style="font-weight:600"':''}" data-id="${p.id}">${escHtml(p.name)}</li>`).join('')
+            : `<li class="sm-search-result" style="color:var(--muted)">No results</li>`;
+          resultsList.querySelectorAll('[data-id]').forEach(li => {
+            li.addEventListener('click', () => {
+              m.manualId = parseInt(li.dataset.id, 10); m.selectedPantryId = m.manualId;
+              searchInput.value = _smAllPantry.find(p => p.id === m.manualId)?.name || '';
+              m.searchQuery = searchInput.value;
+              renderSearchResults(searchInput.value);
+            });
+          });
+        }
+
+        searchInput.addEventListener('input', e => renderSearchResults(e.target.value));
+        if (m.showSearch) renderSearchResults(m.searchQuery);
+        searchBox.appendChild(searchInput);
+        searchBox.appendChild(resultsList);
+
+        // ── Add new pantry item box ─────────────────────────────────────────
+        addBox = document.createElement('div');
+        addBox.className = 'sm-search-box';
+        addBox.style.display = m.showAdd ? '' : 'none';
+
+        const addNameInput = document.createElement('input');
+        addNameInput.type = 'text'; addNameInput.className = 'form-input';
+        addNameInput.placeholder = 'Pantry item name';
+        addNameInput.style.cssText = 'font-size:.85rem;padding:.3rem .5rem;width:100%';
+        addNameInput.value = m.newPantryName !== undefined ? m.newPantryName : ing.name;
+        addNameInput.addEventListener('input', () => { m.newPantryName = addNameInput.value; });
+        addBox.appendChild(addNameInput);
+
+        // ── Re-search handler ───────────────────────────────────────────────
+        reSearchBtn.addEventListener('click', async () => {
+          reSearchBtn.disabled = true;
+          reSearchBtn.textContent = '…';
+          try {
+            const result = await api.smartMatch({
+              ingredients: [{ id: ing.id, recipe_id: ing.recipe_id, name: ing.name, amount: ing.amount, unit: ing.unit }],
+              pantry_items: _smAllPantry.map(p => ({ id: p.id, name: p.name })),
+            });
+            const pantryById = new Map(_smAllPantry.map(p => [p.id, p]));
+            const matchResult = (result.matches || []).find(r => r.ingredient_id === ing.id);
+            if (matchResult && matchResult.suggestions.length > 0) {
+              m.suggestions = matchResult.suggestions
+                .map(s => ({ ...s, pantry: pantryById.get(s.pantry_item_id) }))
+                .filter(s => s.pantry);
+              m.selectedPantryId = m.suggestions[0]?.pantry_item_id || null;
+              m.showSearch = false; m.showAdd = false; m.manualId = null;
+            } else {
+              m.suggestions = [];
+              m.selectedPantryId = null;
+            }
+            renderSmReview();
+          } catch(e) {
+            showToast('Re-search failed: ' + e.message, true);
+            reSearchBtn.disabled = false;
+            reSearchBtn.textContent = '↻ Re-search';
+          }
+        });
+
+        row.appendChild(optList);
+        row.appendChild(searchBox);
+        row.appendChild(addBox);
+        sec.appendChild(row);
+      });
+
+      smBody.appendChild(sec);
+    }
+
+    smFooter.style.display = 'flex';
+  }
+
+  smApply.addEventListener('click', async () => {
+    smApply.disabled = true;
+    let linked = 0, merged = 0, errors = 0;
+
+    try {
+      // Apply merges first (dedup)
+      for (const d of _smDuplicates) {
+        if (!d.checked) continue;
+        const keepId  = d.userKeepId;
+        const mergeId = keepId === d.keep_id ? d.merge_id : d.keep_id;
+        try {
+          await api.mergePantryItems(keepId, mergeId);
+          merged++;
+        } catch(_) { errors++; }
+      }
+
+      // Reload pantry after merges (IDs may have changed)
+      if (merged > 0) await loadItems();
+
+      // Apply ingredient links (create new pantry items where needed first)
+      for (const m of _smMatches) {
+        if (!m.checked) continue;
+        const ing = m.ingredient;
+        try {
+          let pantryId = m.selectedPantryId;
+          if (m.showAdd) {
+            const name = (m.newPantryName || ing.name).trim();
+            if (!name) continue;
+            const newItem = await api.createPantryItem({ name });
+            pantryId = newItem.id;
+          }
+          if (!pantryId) continue;
+          await api.linkIngredientPantry(ing.recipe_id, ing.id, pantryId);
+          linked++;
+        } catch(_) { errors++; }
+      }
+
+      const parts = [];
+      if (linked > 0) parts.push(`${linked} ingredient${linked===1?'':'s'} linked`);
+      if (merged > 0) parts.push(`${merged} duplicate${merged===1?'':'s'} merged`);
+      if (errors > 0) parts.push(`${errors} error${errors===1?'':'s'}`);
+      showToast(parts.join(', ') || 'Nothing applied');
+      smModal.classList.remove('open');
+      if (merged > 0 || linked > 0) await loadItems();
+    } catch(e) {
+      showToast('Apply failed: ' + e.message, true);
+    } finally {
+      smApply.disabled = false;
+    }
+  });
+
+  document.getElementById('smart-match-btn').addEventListener('click', openSmartMatch);
 
   // ── Price Refresh ─────────────────────────────────────────────────────────
 

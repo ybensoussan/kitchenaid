@@ -66,3 +66,20 @@ func (s *Store) DeletePantryItem(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM pantry_items WHERE id=?`, id)
 	return err
 }
+
+// MergePantryItems re-links all ingredients from mergeID → keepID, then deletes mergeID.
+func (s *Store) MergePantryItems(keepID, mergeID int64) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`UPDATE ingredients SET pantry_item_id=? WHERE pantry_item_id=?`, keepID, mergeID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM pantry_items WHERE id=?`, mergeID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}

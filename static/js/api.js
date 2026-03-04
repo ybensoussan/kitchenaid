@@ -82,4 +82,9 @@ const api = {
 
   // AH price lookup
   searchAH: (q) => api.get(`/api/ah/search?q=${encodeURIComponent(q)}`),
+
+  // Smart match
+  getUnlinkedIngredients: ()       => api.get('/api/ingredients/unlinked'),
+  smartMatch:             (data)   => api.post('/api/ai/smart-match', data),
+  mergePantryItems:       (keepId, mergeId) => api.post('/api/pantry/merge', { keep_id: keepId, merge_id: mergeId }),
 };

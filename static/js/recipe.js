@@ -558,6 +558,7 @@
           <span class="ingredient-amount">${escHtml(fmt)}</span>
           <span class="ingredient-name">${escHtml(ing.name)}</span>
           ${ing.notes ? `<span class="ingredient-notes">${escHtml(ing.notes)}</span>` : ''}
+          ${!linked ? `<button class="ing-add-pantry-btn" data-id="${ing.id}" title="Add to pantry &amp; link">+P</button>` : ''}
           <button class="ing-link-btn${linked ? ' linked' : ''}" data-id="${ing.id}" title="${escHtml(linkTitle)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
           <button class="ing-alt-btn" data-id="${ing.id}" title="Find alternatives">⇄</button>
         </div>`;
@@ -570,6 +571,26 @@
         const id = parseInt(el.dataset.id, 10);
         const ing = ings.find(i => i.id === id);
         if (ing) editor.openIngredientModal(ing, ings, null);
+      });
+    });
+
+    // Wire quick "add to pantry" buttons (unlinked ingredients only)
+    list.querySelectorAll('.ing-add-pantry-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id, 10);
+        const ing = ings.find(i => i.id === id);
+        if (!ing) return;
+        btn.disabled = true;
+        try {
+          const newItem = await api.createPantryItem({ name: ing.name });
+          await api.linkIngredientPantry(recipeId, ing.id, newItem.id);
+          await refreshIngredients();
+          showToast(`"${ing.name}" added to pantry`);
+        } catch (err) {
+          showToast('Failed: ' + err.message, true);
+          btn.disabled = false;
+        }
       });
     });
 
