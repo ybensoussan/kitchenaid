@@ -264,7 +264,7 @@
         ? `<img src="${escHtml(recipe.image_url)}" alt="${escHtml(recipe.title)}">`
         : `<div class="recipe-hero-image-placeholder-link" title="Search for images of this recipe" style="cursor:pointer">
              <div class="recipe-hero-image-placeholder">🍽</div>
-             <span class="placeholder-search-hint">🔍 Search images</span>
+             <span class="placeholder-search-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.25rem"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Search images</span>
            </div>`;
 
       if (!recipe.image_url) {
@@ -282,7 +282,7 @@
             ${(recipe.tags || []).map(t => `
               <span class="recipe-tag">
                 ${escHtml(t)}
-                <button class="tag-del-btn edit-controls" data-tag="${escHtml(t)}">×</button>
+                <button class="tag-del-btn edit-controls" data-tag="${escHtml(t)}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </span>
             `).join('')}
             <button id="suggest-tags-btn" class="btn btn-secondary btn-sm edit-controls" style="margin-left: 0.5rem" title="Suggest tags using AI">
@@ -560,7 +560,7 @@
           ${ing.notes ? `<span class="ingredient-notes">${escHtml(ing.notes)}</span>` : ''}
           ${!linked ? `<button class="ing-add-pantry-btn" data-id="${ing.id}" title="Add to pantry &amp; link">+P</button>` : ''}
           <button class="ing-link-btn${linked ? ' linked' : ''}" data-id="${ing.id}" title="${escHtml(linkTitle)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
-          <button class="ing-alt-btn" data-id="${ing.id}" title="Find alternatives">⇄</button>
+          <button class="ing-alt-btn" data-id="${ing.id}" title="Find alternatives"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg></button>
         </div>`;
     }).join('');
 
@@ -628,10 +628,10 @@
           <div class="step-number">${step.step_number}</div>
           <div class="step-content" style="flex:1">
             <p class="step-text">${escHtml(text)}</p>
-            ${step.duration ? `<p class="step-duration">⏱ ${step.duration} min</p>` : ''}
+            ${step.duration ? `<p class="step-duration"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.2rem"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${step.duration} min</p>` : ''}
           </div>
           <div class="step-actions">
-            <button class="btn btn-ghost btn-sm btn-icon step-delete-btn" title="Delete step">🗑</button>
+            <button class="btn btn-ghost btn-sm btn-icon step-delete-btn" title="Delete step"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
           </div>
         </li>`;
     }).join('');
@@ -1122,7 +1122,7 @@
           <div class="cook-timer-card${isDone ? ' done' : ''}${t.running ? ' running' : ''}" data-id="${t.id}">
             <div class="timer-top">
               <input type="text" class="timer-label" value="${escHtml(t.label)}" placeholder="Label">
-              <button class="timer-del-btn">✕</button>
+              <button class="timer-del-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div class="timer-display">${timeStr}</div>
             <div class="timer-controls">

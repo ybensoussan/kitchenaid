@@ -171,7 +171,7 @@
       container.style.display = 'flex';
       container.innerHTML = `
         <button class="tag-filter-btn${!activeTag ? ' active' : ''}" data-tag="">All</button>
-        <button class="tag-filter-btn fav-filter-btn${activeTag === '__favorites__' ? ' active' : ''}" data-tag="__favorites__">♥ Favorites</button>
+        <button class="tag-filter-btn fav-filter-btn${activeTag === '__favorites__' ? ' active' : ''}" data-tag="__favorites__"><svg width="12" height="12" viewBox="0 0 24 24" fill="${activeTag === '__favorites__' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Favorites</button>
         ${tags.map(t => `
           <button class="tag-filter-btn${activeTag === t ? ' active' : ''}" data-tag="${escHtml(t)}">
             ${escHtml(t)}
