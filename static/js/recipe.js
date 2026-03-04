@@ -26,13 +26,20 @@
   scaling.setBase(recipe.base_servings || 4);
   scaling.setDesired(recipe.base_servings || 4);
 
+  // Shared ingredient refresh callback (used by editor and pantry modal)
+  async function refreshIngredients() {
+    const [updated, freshPantry] = await Promise.all([
+      api.getRecipe(recipeId),
+      api.listPantryItems().catch(() => pantryItems),
+    ]);
+    recipe.ingredients = updated.ingredients;
+    pantryItems = freshPantry;
+    renderIngredients();
+  }
+
   // Init editor
   editor.init(recipeId, {
-    onIngredientChange: async () => {
-      const updated = await api.getRecipe(recipeId);
-      recipe.ingredients = updated.ingredients;
-      renderIngredients();
-    },
+    onIngredientChange: refreshIngredients,
     onStepChange: async () => {
       const updated = await api.getRecipe(recipeId);
       recipe.steps = updated.steps;
@@ -57,6 +64,16 @@
 
     // Handle "per stuk / per piece / per st" → 1 piece
     if (/^per\s+(stuk|piece|st)\b/i.test(s)) return { amount: 1, unit: 'piece' };
+
+    // Handle "N x M unit" multi-pack format (e.g. "6 x 15 g", "5 x 5 g")
+    const mx = s.match(/^(\d+)\s*x\s*([\d.]+)\s*(.+)$/i);
+    if (mx) {
+      const count = parseFloat(mx[1]), each = parseFloat(mx[2]);
+      const rawx = mx[3].toLowerCase().trim();
+      const unitMap2 = { 'kg': {unit:'g', factor:1000}, 'g': {unit:'g', factor:1}, 'l': {unit:'ml', factor:1000}, 'ml': {unit:'ml', factor:1} };
+      const ex = unitMap2[rawx];
+      if (ex && count > 0 && each > 0) return { amount: count * each * ex.factor, unit: ex.unit };
+    }
 
     const m = s.match(/^([\d.]+)\s*(.+)$/);
     if (!m) return null;
@@ -85,9 +102,9 @@
   // Density table: grams per teaspoon for common dry ingredients.
   // Lets tsp/tbsp/cup ingredients cost against g-based pantry sizes.
   const DRY_G_PER_TSP = {
-    'salt': 5.7, 'sea salt': 5.7, 'kosher salt': 4.8,
+    'salt': 5.7, 'sea salt': 5.7, 'fine sea salt': 5.7, 'kosher salt': 4.8, 'coarse salt': 5.0,
     'sugar': 4.2, 'white sugar': 4.2, 'granulated sugar': 4.2,
-    'brown sugar': 3.6, 'powdered sugar': 2.5, 'icing sugar': 2.5,
+    'brown sugar': 3.6, 'powdered sugar': 2.5, 'icing sugar': 2.5, "confectioners' sugar": 2.5, 'confectioners sugar': 2.5,
     'flour': 2.6, 'all-purpose flour': 2.6, 'bread flour': 2.9, 'whole wheat flour': 2.9,
     'baking soda': 4.6, 'bicarbonate of soda': 4.6,
     'baking powder': 4.0,
@@ -112,6 +129,11 @@
     'cloves': 2.1, 'ground cloves': 2.1,
     'allspice': 1.9, 'ground allspice': 1.9,
     'mustard powder': 2.8, 'dry mustard': 2.8,
+    // Seeds & nuts
+    'poppy seeds': 2.9, 'sesame seeds': 3.0, 'flax seeds': 3.7, 'chia seeds': 4.0,
+    'fennel seeds': 2.0, 'caraway seeds': 2.2, 'celery seeds': 2.5,
+    // Fats (for tsp-based measures of solid fats)
+    'butter': 4.7, 'ghee': 4.5, 'coconut oil': 4.5, 'lard': 4.5,
   };
 
   function toBaseUnit(amount, unit) {
@@ -129,6 +151,8 @@
       // count
       'piece': ['piece', amount], 'pieces': ['piece', amount],
       'stuks': ['piece', amount], 'stuk': ['piece', amount], 'st': ['piece', amount],
+      // empty unit = dimensionless count (e.g. "3 eggs", "2 lemons")
+      '': ['piece', amount],
     };
     return map[u] || null;
   }
@@ -157,21 +181,78 @@
       }
     }
 
+    // Liquid density fallback: volume ingredient → g-based pantry
+    // (e.g. "3 tbsp lemon juice" linked to "Lemons 500g")
+    if (pkg.unit === 'g') {
+      const ingMl = toBaseUnit(ingAmount, ingUnit);
+      if (ingMl && ingMl[0] === 'ml') {
+        const name = (ingName || '').toLowerCase().trim();
+        const LIQUID_G_PER_ML = {
+          'lemon juice': 1.03, 'lime juice': 1.03, 'orange juice': 1.04,
+          'water': 1.0, 'milk': 1.03, 'buttermilk': 1.03, 'cream': 1.01,
+          'vinegar': 1.05, 'apple cider vinegar': 1.06, 'white vinegar': 1.05,
+          'honey': 1.43, 'maple syrup': 1.32, 'molasses': 1.40,
+          'soy sauce': 1.08, 'fish sauce': 1.1,
+        };
+        const density = LIQUID_G_PER_ML[name];
+        if (density) return (ingMl[1] * density / pkg.amount) * pkgPrice;
+      }
+    }
+
+    // Piece-weight fallback: count ingredient → g-based pantry
+    // (e.g. "2 lemons" linked to "Lemons 500g")
+    if (pkg.unit === 'g') {
+      const ingBase2 = toBaseUnit(ingAmount, ingUnit);
+      if (ingBase2 && ingBase2[0] === 'piece') {
+        const name = (ingName || '').toLowerCase().trim();
+        const PIECE_WEIGHT_G = {
+          'lemon': 130, 'lemons': 130, 'zest of lemon': 130, 'zest of lemons': 130, 'lemon zest': 130,
+          'lime': 80, 'limes': 80, 'orange': 180, 'oranges': 180,
+          'onion': 150, 'yellow onion': 150, 'white onion': 150, 'red onion': 120,
+          'garlic clove': 5, 'garlic': 5,
+          'tomato': 120, 'tomatoes': 120,
+          'carrot': 80, 'carrots': 80,
+          'potato': 170, 'potatoes': 170,
+          'apple': 180, 'apples': 180,
+          'banana': 120, 'bananas': 120,
+          'avocado': 200, 'avocados': 200,
+        };
+        const weight = PIECE_WEIGHT_G[name];
+        if (weight) return (ingBase2[1] * weight / pkg.amount) * pkgPrice;
+      }
+    }
+
     return null;
   }
 
   function computeRecipeCost(ingredients, pantry) {
-    const byId   = new Map(pantry.map(p => [p.id, p]));
-    const byName = new Map(pantry.map(p => [p.name.toLowerCase().trim(), p]));
-    let total = 0, priced = 0;
+    const byId = new Map(pantry.map(p => [p.id, p]));
+    let total = 0, costed = 0, linked = 0;
     for (const ing of ingredients) {
-      const p = (ing.pantry_item_id ? byId.get(ing.pantry_item_id) : null)
-             || byName.get(ing.name.toLowerCase().trim());
+      if (!ing.pantry_item_id) continue;
+      linked++;
+      const p = byId.get(ing.pantry_item_id);
       if (!p || p.price <= 0) continue;
       const cost = calcIngredientCost(ing.amount, ing.unit, ing.name, p.price, p.price_unit_size);
-      if (cost !== null) { total += cost; priced++; }
+      if (cost !== null) { total += cost; costed++; }
     }
-    return { total, priced, of: ingredients.length };
+    return { total, costed, linked, of: ingredients.length };
+  }
+
+  function renderCost() {
+    const el = document.getElementById('recipe-cost-display');
+    if (!el) return;
+    const cost = computeRecipeCost(recipe.ingredients || [], pantryItems);
+    if (cost.linked === 0) { el.innerHTML = ''; return; }
+    const perServing = recipe.base_servings > 0 ? cost.total / recipe.base_servings : 0;
+    el.innerHTML = `<div class="recipe-cost-row">
+      <span class="recipe-cost-label">Est. cost</span>
+      <span class="recipe-cost-value">
+        ~€${cost.total.toFixed(2)}
+        ${perServing > 0 ? `<span class="recipe-cost-per"> · ~€${perServing.toFixed(2)}/serving</span>` : ''}
+        <span class="recipe-cost-coverage">(${cost.linked}/${cost.of} linked)</span>
+      </span>
+    </div>`;
   }
 
   function renderHero() {
@@ -228,19 +309,7 @@
             <span class="recipe-meta-value">${recipe.base_servings}</span>
           </div>
         </div>
-        ${(() => {
-          const cost = computeRecipeCost(recipe.ingredients || [], pantryItems);
-          if (cost.priced === 0) return '';
-          const perServing = recipe.base_servings > 0 ? cost.total / recipe.base_servings : 0;
-          return `<div class="recipe-cost-row">
-            <span class="recipe-cost-label">Est. cost</span>
-            <span class="recipe-cost-value">
-              ~€${cost.total.toFixed(2)}
-              ${perServing > 0 ? `<span class="recipe-cost-per"> · ~€${perServing.toFixed(2)}/serving</span>` : ''}
-              <span class="recipe-cost-coverage">(${cost.priced}/${cost.of} ingredients priced)</span>
-            </span>
-          </div>`;
-        })()}
+        <div id="recipe-cost-display"></div>
         <div class="recipe-external-links">
           ${recipe.source_url
             ? `<a href="${escHtml(recipe.source_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
@@ -317,6 +386,8 @@
         }
       });
     });
+
+    renderCost();
   }
 
   // ── Image Search ─────────────────────────────────────────────────────────
@@ -521,6 +592,8 @@
         if (ing) openAlternativesModal(ing);
       });
     });
+
+    renderCost();
   }
 
   function renderSteps() {
@@ -878,11 +951,13 @@
     linkConfirm.disabled = true;
     try {
       await api.linkIngredientPantry(recipeId, _linkIngredientId, _linkSelectedPantryId);
-      const updated = await api.getRecipe(recipeId);
+      const [updated, freshPantry] = await Promise.all([
+        api.getRecipe(recipeId),
+        api.listPantryItems().catch(() => pantryItems),
+      ]);
       recipe.ingredients = updated.ingredients;
-      pantryItems = await api.listPantryItems().catch(() => pantryItems);
+      pantryItems = freshPantry;
       renderIngredients();
-      renderHero();
       linkModal.classList.remove('open');
       showToast('Pantry item linked');
     } catch (e) {
@@ -898,7 +973,6 @@
       const updated = await api.getRecipe(recipeId);
       recipe.ingredients = updated.ingredients;
       renderIngredients();
-      renderHero();
       linkModal.classList.remove('open');
       showToast('Pantry link cleared');
     } catch (e) {
@@ -1220,7 +1294,10 @@
   document.getElementById('cook-btn')?.addEventListener('click', () => cookingMode.enter());
 
   document.getElementById('add-to-pantry-btn')
-    ?.addEventListener('click', () => pantryReview.open(recipe.ingredients || []));
+    ?.addEventListener('click', () => pantryReview.open(recipe.ingredients || [], {
+      recipeId,
+      onDone: refreshIngredients,
+    }));
 })();
 
 function escHtml(s) {

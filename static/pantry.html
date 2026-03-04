@@ -69,6 +69,13 @@
     .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
     .empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
     .btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
+    .pantry-filter-btn {
+      font-size: .78rem; padding: .2rem .65rem; border-radius: 999px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+    }
+    .pantry-filter-btn:hover { background: var(--hover-bg); color: var(--text); }
+    .pantry-filter-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
   </style>
 </head>
 <body>
@@ -85,8 +92,12 @@
 </header>
 
 <main class="pantry-container">
-  <div class="page-header">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <h1 class="page-title"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Pantry</h1>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button id="refresh-unpriced-btn" class="btn btn-secondary">&#x21BB; Price Unpriced</button>
+      <button id="refresh-prices-btn" class="btn btn-secondary">&#x21BB; Refresh All Prices</button>
+    </div>
   </div>
 
   <!-- Add form -->
@@ -100,8 +111,13 @@
 
   <!-- Search + list -->
   <div class="pantry-table">
-    <div class="pantry-search">
-      <input type="search" id="search-input" class="form-input" placeholder="Search pantry…" autocomplete="off" style="width:100%">
+    <div class="pantry-search" style="display:flex;flex-direction:column;gap:.5rem">
+      <input type="search" id="search-input" class="form-input" placeholder="Search pantry…" autocomplete="off">
+      <div id="pantry-filters" style="display:flex;gap:.35rem;flex-wrap:wrap">
+        <button class="pantry-filter-btn active" data-filter="all">All</button>
+        <button class="pantry-filter-btn" data-filter="unpriced">Unpriced</button>
+        <button class="pantry-filter-btn" data-filter="priced">Priced</button>
+      </div>
     </div>
     <ul class="pantry-list" id="pantry-list">
       <li class="empty-state">Loading…</li>
@@ -125,6 +141,21 @@
       </div>
     </div>
     <div id="ah-picker-body"></div>
+  </div>
+</div>
+
+<!-- Price Refresh Modal -->
+<div id="price-refresh-modal" class="modal-overlay">
+  <div class="modal" style="width:min(600px,96vw)">
+    <div class="modal-header">
+      <h2 class="modal-title">Refresh Prices</h2>
+      <button class="modal-close btn btn-ghost btn-icon" id="price-refresh-close">✕</button>
+    </div>
+    <div id="price-refresh-body" style="padding:1rem 1.25rem;min-height:120px"></div>
+    <div class="modal-footer" id="price-refresh-footer" style="display:none;padding:.75rem 1.25rem;border-top:1px solid var(--border);justify-content:flex-end;gap:.5rem">
+      <button id="price-refresh-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="price-refresh-apply" class="btn btn-primary">Apply selected</button>
+    </div>
   </div>
 </div>
 
@@ -161,6 +192,8 @@
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
+  let activeFilter = 'all';
+
   async function loadItems() {
     try {
       items = await api.listPantryItems();
@@ -171,13 +204,22 @@
     renderList(document.getElementById('search-input').value);
   }
 
+  function applyFilter(it) {
+    if (activeFilter === 'unpriced') return !(it.price > 0);
+    if (activeFilter === 'priced')   return it.price > 0;
+    return true;
+  }
+
   function renderList(query = '') {
     const list = document.getElementById('pantry-list');
     const q = query.toLowerCase();
-    const filtered = items.filter(it => it.name.toLowerCase().includes(q));
+    const filtered = items.filter(it => it.name.toLowerCase().includes(q) && applyFilter(it));
 
     if (filtered.length === 0) {
-      list.innerHTML = `<li class="empty-state">${items.length === 0 ? 'No pantry items yet. Add one above.' : 'No results.'}</li>`;
+      const msg = items.length === 0 ? 'No pantry items yet. Add one above.'
+        : activeFilter !== 'all' ? `No ${activeFilter} items${q ? ' matching your search' : ''}.`
+        : 'No results.';
+      list.innerHTML = `<li class="empty-state">${msg}</li>`;
       return;
     }
 
@@ -267,6 +309,14 @@
     renderList(e.target.value);
   });
 
+  document.getElementById('pantry-filters').addEventListener('click', e => {
+    const btn = e.target.closest('.pantry-filter-btn');
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    document.querySelectorAll('.pantry-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderList(document.getElementById('search-input').value);
+  });
+
   // ── AH Price Picker ───────────────────────────────────────────────────────
 
   const ahModal       = document.getElementById('ah-picker-modal');
@@ -347,6 +397,279 @@
     ahSearchInput.select();
     await runAHSearch(itemName);
   }
+
+  // ── Price Refresh ─────────────────────────────────────────────────────────
+
+  const priceRefreshModal  = document.getElementById('price-refresh-modal');
+  const priceRefreshBody   = document.getElementById('price-refresh-body');
+  const priceRefreshFooter = document.getElementById('price-refresh-footer');
+  const priceRefreshApply  = document.getElementById('price-refresh-apply');
+  const priceRefreshCancel = document.getElementById('price-refresh-cancel');
+
+  document.getElementById('price-refresh-close').addEventListener('click', () => priceRefreshModal.classList.remove('open'));
+  priceRefreshModal.addEventListener('click', e => { if (e.target === priceRefreshModal) priceRefreshModal.classList.remove('open'); });
+  priceRefreshCancel.addEventListener('click', () => priceRefreshModal.classList.remove('open'));
+
+  let _refreshResults = [];
+
+  function formatPrice(item) {
+    if (!item || item.price <= 0) return '—';
+    return `€${item.price.toFixed(2)} / ${escHtml(item.price_unit_size || '?')}`;
+  }
+
+  function renderRefreshResults(results) {
+    _refreshResults = results;
+
+    const ul = document.createElement('ul');
+    ul.style.cssText = 'list-style:none;padding:0;margin:0;max-height:460px;overflow-y:auto';
+
+    results.forEach((r, i) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'border-bottom:1px solid var(--border)';
+
+      if (r.status === 'notfound' || r.status === 'error') {
+        li.style.opacity = '.55';
+        li.innerHTML = `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem">
+          <input type="checkbox" disabled style="flex-shrink:0">
+          <span style="flex:1;font-size:.9rem;font-weight:500">${escHtml(r.item.name)}</span>
+          ${r.status === 'error'
+            ? `<span style="font-size:.82rem;color:#dc2626">Error</span>`
+            : `<span style="font-size:.82rem;color:var(--muted)">— No match found —</span>
+               <button class="btn btn-ghost btn-sm search-↗-btn" style="font-size:.78rem;white-space:nowrap">Search ↗</button>`}
+        </div>`;
+        if (r.status === 'notfound') {
+          li.querySelector('.search-↗-btn').addEventListener('click', () => {
+            priceRefreshModal.classList.remove('open');
+            openAHPicker(r.item.id, r.item.name);
+          });
+        }
+        ul.appendChild(li);
+        return;
+      }
+
+      // ── found row ──
+      const cur = formatPrice(r.item);
+
+      function productLabel(p) {
+        return `€${p.price.toFixed(2)} / ${p.salesUnitSize}`;
+      }
+
+      function isChanged() {
+        return r.best.price !== r.item.price || r.best.salesUnitSize !== r.item.price_unit_size;
+      }
+
+      // Main row
+      const mainRow = document.createElement('div');
+      mainRow.style.cssText = 'display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'refresh-cb';
+      cb.dataset.idx = i;
+      cb.checked = true;
+      cb.style.flexShrink = '0';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.style.cssText = 'flex:1;font-size:.9rem;font-weight:500;min-width:80px';
+      nameSpan.textContent = r.item.name;
+
+      const curSpan = document.createElement('span');
+      curSpan.style.cssText = 'font-size:.82rem;color:var(--muted);white-space:nowrap';
+      curSpan.textContent = cur;
+
+      const arrow = document.createElement('span');
+      arrow.style.cssText = 'font-size:.82rem;color:var(--muted)';
+      arrow.textContent = '→';
+
+      const selectedProduct = document.createElement('div');
+      selectedProduct.style.cssText = 'display:flex;align-items:center;gap:.4rem;min-width:0';
+
+      function renderSelectedProduct() {
+        const p = r.best;
+        const changed = isChanged();
+        selectedProduct.innerHTML = '';
+        if (p.imageUrl) {
+          const img = document.createElement('img');
+          img.src = p.imageUrl;
+          img.style.cssText = 'width:28px;height:28px;object-fit:contain;border-radius:3px;flex-shrink:0;background:#f5f5f5';
+          img.loading = 'lazy';
+          selectedProduct.appendChild(img);
+        }
+        const info = document.createElement('div');
+        info.style.cssText = 'min-width:0';
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px';
+        titleEl.textContent = p.title;
+        const priceEl = document.createElement('div');
+        priceEl.style.cssText = `font-size:.82rem;font-weight:600;white-space:nowrap;${changed ? 'color:var(--brand)' : 'color:var(--muted)'}`;
+        priceEl.textContent = productLabel(p);
+        info.appendChild(titleEl);
+        info.appendChild(priceEl);
+        selectedProduct.appendChild(info);
+      }
+      renderSelectedProduct();
+
+      const changeBtn = document.createElement('button');
+      changeBtn.className = 'btn btn-ghost btn-sm';
+      changeBtn.style.cssText = 'font-size:.78rem;white-space:nowrap;flex-shrink:0';
+      changeBtn.textContent = '▾ Change';
+
+      mainRow.appendChild(cb);
+      mainRow.appendChild(nameSpan);
+      mainRow.appendChild(curSpan);
+      mainRow.appendChild(arrow);
+      mainRow.appendChild(selectedProduct);
+      mainRow.appendChild(changeBtn);
+
+      // Picker sub-row (hidden by default)
+      const pickerRow = document.createElement('div');
+      pickerRow.style.cssText = 'display:none;flex-direction:column;gap:0;border-top:1px solid var(--border);background:var(--hover-bg, #f9f9f9)';
+
+      r.products.forEach(p => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:.6rem;padding:.4rem .75rem .4rem 2.4rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s';
+        row.addEventListener('mouseenter', () => row.style.background = 'var(--hover-bg)');
+        row.addEventListener('mouseleave', () => row.style.background = '');
+
+        if (p.imageUrl) {
+          const img = document.createElement('img');
+          img.src = p.imageUrl;
+          img.style.cssText = 'width:32px;height:32px;object-fit:contain;border-radius:3px;flex-shrink:0;background:#f5f5f5';
+          img.loading = 'lazy';
+          row.appendChild(img);
+        } else {
+          const ph = document.createElement('div');
+          ph.style.cssText = 'width:32px;height:32px;flex-shrink:0;background:var(--border);border-radius:3px';
+          row.appendChild(ph);
+        }
+
+        const info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0';
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+        titleEl.textContent = p.title;
+        const sizeEl = document.createElement('div');
+        sizeEl.style.cssText = 'font-size:.78rem;color:var(--muted)';
+        sizeEl.textContent = p.salesUnitSize + (p.unitPriceDesc ? ' · ' + p.unitPriceDesc : '');
+        info.appendChild(titleEl);
+        info.appendChild(sizeEl);
+
+        const priceEl = document.createElement('div');
+        priceEl.style.cssText = 'font-size:.9rem;font-weight:600;color:var(--brand);white-space:nowrap';
+        priceEl.textContent = `€${p.price.toFixed(2)}`;
+
+        const tickEl = document.createElement('div');
+        tickEl.style.cssText = 'font-size:.9rem;width:1rem;text-align:center;flex-shrink:0';
+
+        function refreshTick() {
+          tickEl.textContent = r.best === p ? '✓' : '';
+        }
+        refreshTick();
+
+        tickEl.dataset.tick = '1';
+        row.appendChild(info);
+        row.appendChild(priceEl);
+        row.appendChild(tickEl);
+
+        row.addEventListener('click', () => {
+          r.best = p;
+          renderSelectedProduct();
+          pickerRow.querySelectorAll('[data-tick]').forEach(el => el.textContent = '');
+          tickEl.textContent = '✓';
+          pickerRow.style.display = 'none';
+          changeBtn.textContent = '▾ Change';
+        });
+
+        pickerRow.appendChild(row);
+      });
+
+      changeBtn.addEventListener('click', () => {
+        const open = pickerRow.style.display !== 'none';
+        pickerRow.style.display = open ? 'none' : 'flex';
+        pickerRow.style.flexDirection = 'column';
+        changeBtn.textContent = open ? '▾ Change' : '▴ Close';
+      });
+
+      li.appendChild(mainRow);
+      li.appendChild(pickerRow);
+      ul.appendChild(li);
+    });
+
+    priceRefreshBody.innerHTML = '';
+    priceRefreshBody.appendChild(ul);
+    priceRefreshFooter.style.display = 'flex';
+  }
+
+  async function openPriceRefresh(subset) {
+    const target = subset || items;
+    if (target.length === 0) { showToast('No items to price'); return; }
+
+    _refreshResults = [];
+    priceRefreshFooter.style.display = 'none';
+    priceRefreshBody.innerHTML = `<div style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem">
+      <div id="refresh-progress-text" style="font-size:.9rem;color:var(--muted)">Preparing…</div>
+      <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden">
+        <div id="refresh-progress-bar" style="height:100%;background:var(--brand);width:0%;transition:width .2s"></div>
+      </div>
+    </div>`;
+    priceRefreshModal.classList.add('open');
+
+    const results = [];
+    for (let i = 0; i < target.length; i++) {
+      const item = target[i];
+      const pct  = Math.round((i / target.length) * 100);
+      const progressText = document.getElementById('refresh-progress-text');
+      const progressBar  = document.getElementById('refresh-progress-bar');
+      if (progressText) progressText.textContent = `Searching ${i + 1} / ${target.length}: ${item.name}`;
+      if (progressBar)  progressBar.style.width  = pct + '%';
+
+      try {
+        const data     = await api.searchAH(item.name);
+        const products = data.products || [];
+        results.push(products.length
+          ? { item, products, best: products[0], status: 'found' }
+          : { item, products: [], best: null, status: 'notfound' });
+      } catch (_) {
+        results.push({ item, products: [], best: null, status: 'error' });
+      }
+    }
+
+    renderRefreshResults(results);
+  }
+
+  priceRefreshApply.addEventListener('click', async () => {
+    const toUpdate = [];
+    priceRefreshBody.querySelectorAll('.refresh-cb:checked').forEach(cb => {
+      const r = _refreshResults[parseInt(cb.dataset.idx, 10)];
+      if (r && r.status === 'found') toUpdate.push(r);
+    });
+
+    if (toUpdate.length === 0) { showToast('Nothing selected'); return; }
+
+    priceRefreshApply.disabled = true;
+    try {
+      for (const r of toUpdate) {
+        await api.updatePantryItem(r.item.id, {
+          name:           r.item.name,
+          price:          r.best.price,
+          price_unit_size: r.best.salesUnitSize,
+        });
+      }
+      await loadItems();
+      priceRefreshModal.classList.remove('open');
+      showToast(`Updated ${toUpdate.length} item${toUpdate.length === 1 ? '' : 's'}`);
+    } catch (e) {
+      showToast('Update failed: ' + e.message, true);
+    } finally {
+      priceRefreshApply.disabled = false;
+    }
+  });
+
+  document.getElementById('refresh-prices-btn').addEventListener('click', () => openPriceRefresh());
+  document.getElementById('refresh-unpriced-btn').addEventListener('click', () => {
+    const unpriced = items.filter(it => !(it.price > 0));
+    openPriceRefresh(unpriced);
+  });
 
   // ── Init ─────────────────────────────────────────────────────────────────
 

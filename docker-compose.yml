@@ -10,4 +10,5 @@ services:
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
+      - ./static:/app/static
     restart: unless-stopped
