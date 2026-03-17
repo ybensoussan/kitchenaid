@@ -87,4 +87,13 @@ const api = {
   getUnlinkedIngredients: ()       => api.get('/api/ingredients/unlinked'),
   smartMatch:             (data)   => api.post('/api/ai/smart-match', data),
   mergePantryItems:       (keepId, mergeId) => api.post('/api/pantry/merge', { keep_id: keepId, merge_id: mergeId }),
+
+  // Meal Planner
+  listPlans:          ()                       => api.get('/api/plans'),
+  createPlan:         (name, weekStart)        => api.post('/api/plans', { name, week_start: weekStart }),
+  getPlan:            (id)                     => api.get(`/api/plans/${id}`),
+  deletePlan:         (id)                     => api.delete(`/api/plans/${id}`),
+  addPlanEntry:       (planId, data)           => api.post(`/api/plans/${planId}/entries`, data),
+  deletePlanEntry:    (planId, entryId)        => api.delete(`/api/plans/${planId}/entries/${entryId}`),
+  getGroceryList:     (planId)                 => api.get(`/api/plans/${planId}/grocery`),
 };

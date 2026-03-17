@@ -56,4 +56,20 @@ CREATE TABLE IF NOT EXISTS recipe_tags (
 );
 
 INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_provider', 'anthropic');
+
+CREATE TABLE IF NOT EXISTS meal_plans (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    week_start TEXT    NOT NULL,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS meal_plan_entries (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    meal_plan_id INTEGER NOT NULL REFERENCES meal_plans(id) ON DELETE CASCADE,
+    recipe_id    INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    day          TEXT    NOT NULL,
+    meal_type    TEXT    NOT NULL,
+    servings     INTEGER NOT NULL DEFAULT 1
+);
 `

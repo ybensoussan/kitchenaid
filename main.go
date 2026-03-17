@@ -85,6 +85,14 @@ func main() {
 
 	mux.HandleFunc("GET /api/ah/search", h.SearchAH)
 
+	mux.HandleFunc("GET /api/plans", h.ListMealPlans)
+	mux.HandleFunc("POST /api/plans", h.CreateMealPlan)
+	mux.HandleFunc("GET /api/plans/{id}", h.GetMealPlan)
+	mux.HandleFunc("DELETE /api/plans/{id}", h.DeleteMealPlan)
+	mux.HandleFunc("POST /api/plans/{id}/entries", h.AddMealPlanEntry)
+	mux.HandleFunc("DELETE /api/plans/{id}/entries/{eid}", h.DeleteMealPlanEntry)
+	mux.HandleFunc("GET /api/plans/{id}/grocery", h.GetGroceryList)
+
 	// Static files
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(cfg.UploadsDir))))
 	mux.Handle("/", http.FileServer(http.Dir("./static")))

@@ -131,3 +131,31 @@ type APIResponse struct {
 	Data  interface{} `json:"data"`
 	Error *string     `json:"error"`
 }
+
+// Meal Planner
+
+type MealPlan struct {
+	ID        int64           `json:"id"`
+	Name      string          `json:"name"`
+	WeekStart string          `json:"week_start"` // YYYY-MM-DD of Monday
+	Entries   []MealPlanEntry `json:"entries"`
+	CreatedAt string          `json:"created_at"`
+}
+
+type MealPlanEntry struct {
+	ID          int64  `json:"id"`
+	MealPlanID  int64  `json:"meal_plan_id"`
+	RecipeID    int64  `json:"recipe_id"`
+	RecipeTitle string `json:"recipe_title"`
+	RecipeImage string `json:"recipe_image"`
+	Day         string `json:"day"`       // monday..sunday
+	MealType    string `json:"meal_type"` // breakfast, lunch, dinner, snack
+	Servings    int    `json:"servings"`
+}
+
+type GroceryItem struct {
+	Name    string   `json:"name"`
+	Amount  float64  `json:"amount"`
+	Unit    string   `json:"unit"`
+	Recipes []string `json:"recipes"`
+}

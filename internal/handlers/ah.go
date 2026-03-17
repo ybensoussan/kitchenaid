@@ -211,14 +211,23 @@ func (h *Handler) SearchAH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		// Token may have been invalidated early — clear the cache so next call gets a fresh one
+		ahCache.Lock()
+		ahCache.token = ""
+		ahCache.Unlock()
+		h.writeError(w, http.StatusBadGateway, fmt.Sprintf("AH search returned %d: %s", resp.StatusCode, string(rawBody)))
+		return
+	}
+
 	var raw struct {
 		Products []struct {
-			ID              int     `json:"id"`
-			Title           string  `json:"title"`
+			WebshopID        int     `json:"webshopId"`
+			Title            string  `json:"title"`
 			PriceBeforeBonus float64 `json:"priceBeforeBonus"`
-			SalesUnitSize   string  `json:"salesUnitSize"`
+			SalesUnitSize    string  `json:"salesUnitSize"`
 			UnitPriceDescription string `json:"unitPriceDescription"`
-			Images          []struct {
+			Images           []struct {
 				URL string `json:"url"`
 			} `json:"images"`
 		} `json:"products"`
@@ -235,7 +244,7 @@ func (h *Handler) SearchAH(w http.ResponseWriter, r *http.Request) {
 			imgURL = p.Images[0].URL
 		}
 		results = append(results, AHProduct{
-			ID:            p.ID,
+			ID:            p.WebshopID,
 			Title:         p.Title,
 			Price:         p.PriceBeforeBonus,
 			SalesUnitSize: p.SalesUnitSize,
