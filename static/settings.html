@@ -3,149 +3,421 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings — KitchenAid</title>
+  <title>Settings — The Editorial Kitchen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
   <link rel="stylesheet" href="/css/reset.css">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/editorial.css">
   <script src="/js/theme.js"></script>
   <style>
-    .settings-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: calc(var(--radius) * 1.5);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+    /* Settings page — editorial overrides */
+    .settings-block {
+      margin-bottom: 2.5rem;
     }
-    .settings-title {
-      font-size: 1.1rem;
+    .settings-block-label {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
       font-weight: 700;
-      margin-bottom: 1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--primary, #516441);
+      margin-bottom: 0.6rem;
+    }
+    .settings-block-title {
+      font-family: var(--font-headline, 'Noto Serif', serif);
+      font-size: 1.25rem;
+      font-weight: 700;
       color: var(--text);
+      margin-bottom: 0.35rem;
     }
-    .provider-option {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+    .settings-block-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.55;
+    }
+    .settings-card {
+      background: var(--surface-lowest, #fff);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
       margin-bottom: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 12px rgba(0,0,0,0.04);
+    }
+
+    /* Provider selection cards */
+    .provider-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .provider-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.1rem 1.25rem;
+      background: var(--surface-lowest, #fff);
+      border-radius: 1rem;
       cursor: pointer;
-      transition: border-color var(--transition), background var(--transition);
+      transition: box-shadow 0.18s, transform 0.18s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      position: relative;
     }
-    .provider-option:hover {
-      background: var(--hover-soft);
+    .provider-card:hover {
+      box-shadow: 0 4px 16px rgba(81,100,65,0.12);
+      transform: translateY(-1px);
     }
-    .provider-option.selected {
-      border-color: var(--brand);
-      background: var(--hover-soft);
+    .provider-card.selected {
+      box-shadow: 0 0 0 2px var(--primary, #516441), 0 4px 16px rgba(81,100,65,0.12);
     }
-    .provider-radio {
-      width: 1.25rem;
-      height: 1.25rem;
-      accent-color: var(--brand);
+    .provider-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
     }
-    .provider-info {
+    .provider-dot {
+      width: 1.1rem;
+      height: 1.1rem;
+      border-radius: 50%;
+      border: 2px solid var(--border, #e0dbd4);
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .provider-dot::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      background: var(--primary, #516441);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .provider-card.selected .provider-dot {
+      border-color: var(--primary, #516441);
+    }
+    .provider-card.selected .provider-dot::after {
+      opacity: 1;
+    }
+    .provider-body {
       flex: 1;
     }
     .provider-name {
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
       margin-bottom: 0.2rem;
     }
     .provider-desc {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--muted);
+    }
+    .provider-key-row {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border, #e0dbd4);
+    }
+    .provider-key-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .provider-key-input {
+      width: 100%;
+      padding: 0.55rem 0.8rem;
+      font-size: 0.875rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--surface, #faf9f8);
+      border: none;
+      border-radius: 0.6rem;
+      color: var(--text);
+      box-sizing: border-box;
+      outline: none;
+      transition: box-shadow 0.15s;
+    }
+    .provider-key-input:focus {
+      box-shadow: 0 0 0 2px var(--primary, #516441);
+    }
+    .provider-key-input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    /* Model row */
+    .model-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .model-row .form-select {
+      flex: 1;
+      border-radius: 0.75rem;
+      border: none;
+      background: var(--surface, #faf9f8);
+      padding: 0.6rem 0.9rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      outline: none;
+      box-shadow: none;
+      transition: box-shadow 0.15s;
+    }
+    .model-row .form-select:focus {
+      box-shadow: 0 0 0 2px var(--primary, #516441);
+    }
+    #model-status {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+
+    /* Backup cards */
+    .backup-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .backup-action-card {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface, #faf9f8);
+      border-radius: 1rem;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: box-shadow 0.18s, transform 0.18s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .backup-action-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .backup-action-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.6rem;
+      background: color-mix(in srgb, var(--primary, #516441) 10%, transparent);
+      color: var(--primary, #516441);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Save bar */
+    .settings-save-bar {
+      position: sticky;
+      bottom: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 1rem;
+    }
+    .settings-save-bar .btn-primary {
+      padding: 0.7rem 2rem;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #516441 0%, #869b74 100%);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(81,100,65,0.25);
+      transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .settings-save-bar .btn-primary:hover {
+      opacity: 0.9;
+      box-shadow: 0 6px 20px rgba(81,100,65,0.35);
+    }
+    .settings-save-bar .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Section divider */
+    .settings-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border, #e0dbd4), transparent);
+      margin: 2rem 0;
     }
   </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
-    <nav class="header-nav">
-      <a href="/pantry.html" class="btn btn-secondary btn-icon" title="Pantry"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg></a>
-      <a href="/planner.html" class="btn btn-secondary btn-icon" title="Planner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></a>
-      <a href="/settings.html" class="btn btn-secondary btn-icon active" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
-      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
-    </nav>
+<!-- Desktop Sidebar -->
+<aside class="editorial-sidebar">
+  <div class="editorial-sidebar-brand">
+    <h1>The Editorial Kitchen</h1>
+    <p>Curated Atelier</p>
   </div>
-</header>
-
-<main class="page-container">
-  <div class="page-header">
-    <h1 class="page-title">Settings</h1>
+  <nav class="editorial-sidebar-nav">
+    <a href="/" class="editorial-nav-link">
+      <span class="material-symbols-outlined">skillet</span>
+      Recipes
+    </a>
+    <a href="/planner.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">calendar_month</span>
+      Planner
+    </a>
+    <a href="/pantry.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      Pantry
+    </a>
+    <a href="/add.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">add_circle</span>
+      Add Recipe
+    </a>
+    <a href="/settings.html" class="editorial-nav-link active">
+      <span class="material-symbols-outlined">settings</span>
+      Settings
+    </a>
+  </nav>
+  <div class="editorial-sidebar-cta">
+    <button onclick="window.location='/add.html'">
+      <span class="material-symbols-outlined" style="font-size:1rem">auto_awesome</span>
+      Add Recipe
+    </button>
   </div>
+</aside>
 
-  <div class="settings-section">
-    <h2 class="settings-title">AI Provider for Alternatives</h2>
-    <p style="margin-bottom: 1.25rem; font-size: 0.9rem; color: var(--muted);">
-      Choose which AI model to use when finding ingredient substitutes.
-    </p>
+<div class="editorial-page">
 
-    <div class="provider-list">
-      <div class="provider-group">
-        <label class="provider-option" data-provider="anthropic">
-          <input type="radio" name="ai_provider" value="anthropic" class="provider-radio">
-          <div class="provider-info">
-            <div class="provider-name">Anthropic (Claude)</div>
-            <div class="provider-desc">Great for culinary nuance and balanced substitutes.</div>
+  <!-- Top Nav -->
+  <header class="editorial-topnav">
+    <div class="editorial-topnav-inner">
+      <span class="editorial-topnav-brand">Settings</span>
+      <div class="editorial-topnav-actions">
+        <button id="theme-toggle-btn" class="editorial-icon-btn" title="Switch to dark mode">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
+        <a href="/" class="editorial-icon-btn" title="Recipes">
+          <span class="material-symbols-outlined">skillet</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="editorial-page-content">
+<main class="page-container" style="max-width:680px;padding-top:0;padding-bottom:6rem;">
+
+  <!-- AI Provider -->
+  <div class="settings-block">
+    <div class="settings-block-label">Intelligence</div>
+    <div class="settings-block-title">AI Provider</div>
+    <div class="settings-block-desc">Choose which model powers ingredient alternatives, smart matching, and recipe parsing.</div>
+
+    <div class="provider-cards">
+      <label class="provider-card" data-provider="anthropic">
+        <input type="radio" name="ai_provider" value="anthropic">
+        <div class="provider-dot"></div>
+        <div class="provider-body">
+          <div class="provider-name">Anthropic — Claude</div>
+          <div class="provider-desc">Exceptional culinary nuance and reasoning. Best for ingredient alternatives.</div>
+          <div class="provider-key-row">
+            <div class="provider-key-label">API Key</div>
+            <input type="password" id="anthropic-key" class="provider-key-input" placeholder="sk-ant-api03-…" autocomplete="off">
           </div>
-        </label>
-        <div class="form-group" style="padding-left: 2.25rem;">
-          <label class="form-label" style="font-size: 0.8rem">Anthropic API Key</label>
-          <input type="password" id="anthropic-key" class="form-input" placeholder="sk-ant-...">
         </div>
-      </div>
+      </label>
 
-      <div class="provider-group" style="margin-top: 1.5rem">
-        <label class="provider-option" data-provider="gemini">
-          <input type="radio" name="ai_provider" value="gemini" class="provider-radio">
-          <div class="provider-info">
-            <div class="provider-name">Google Gemini</div>
-            <div class="provider-desc">Fast and reliable suggestions.</div>
+      <label class="provider-card" data-provider="gemini">
+        <input type="radio" name="ai_provider" value="gemini">
+        <div class="provider-dot"></div>
+        <div class="provider-body">
+          <div class="provider-name">Google — Gemini</div>
+          <div class="provider-desc">Fast and reliable for bulk parsing and smart pantry matching.</div>
+          <div class="provider-key-row">
+            <div class="provider-key-label">API Key</div>
+            <input type="password" id="gemini-key" class="provider-key-input" placeholder="AIzaSy…" autocomplete="off">
           </div>
-        </label>
-        <div class="form-group" style="padding-left: 2.25rem;">
-          <label class="form-label" style="font-size: 0.8rem">Gemini API Key</label>
-          <input type="password" id="gemini-key" class="form-input" placeholder="AIza...">
         </div>
+      </label>
+    </div>
+  </div>
+
+  <div class="settings-divider"></div>
+
+  <!-- Model -->
+  <div class="settings-block">
+    <div class="settings-block-label">Model</div>
+    <div class="settings-block-title">Select Model</div>
+    <div class="settings-block-desc">Enter your API key above, then load available models to pick a specific version.</div>
+    <div class="settings-card" style="padding:1.1rem 1.25rem;">
+      <div class="model-row">
+        <select id="model-select" class="form-select">
+          <option value="">— use default —</option>
+        </select>
+        <button id="load-models-btn" class="btn btn-secondary" style="white-space:nowrap;border-radius:9999px;font-size:0.82rem;padding:0.5rem 1rem;">Load Models</button>
       </div>
+      <p id="model-status"></p>
     </div>
   </div>
 
-  <div class="settings-section">
-    <h2 class="settings-title">Model</h2>
-    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--muted);">
-      Select the model to use. Click <strong>Load Models</strong> after entering your API key to see available options.
-    </p>
-    <div style="display: flex; gap: 0.75rem; align-items: center;">
-      <select id="model-select" class="form-select" style="flex:1">
-        <option value="">— default —</option>
-      </select>
-      <button id="load-models-btn" class="btn btn-secondary">Load Models</button>
-    </div>
-    <p id="model-status" style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;"></p>
-  </div>
+  <div class="settings-divider"></div>
 
-  <div class="settings-section">
-    <h2 class="settings-title">Backup & Restore</h2>
-    <p style="margin-bottom: 1.25rem; font-size: 0.9rem; color: var(--muted);">
-      Export your entire recipe book and pantry as a database file, or restore from a backup.
-    </p>
-    <div style="display: flex; gap: 1rem; align-items: center;">
-      <a href="/api/db/export" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Export Database</a>
-      
-      <div style="position: relative;">
-        <button id="import-db-btn" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Import Database</button>
-        <input type="file" id="import-db-input" accept=".db" style="display:none">
-      </div>
+  <!-- Backup & Restore -->
+  <div class="settings-block">
+    <div class="settings-block-label">Data</div>
+    <div class="settings-block-title">Backup &amp; Restore</div>
+    <div class="settings-block-desc">Export your entire recipe library and pantry, or restore from a previous backup.</div>
+
+    <div class="backup-actions">
+      <a href="/api/db/export" class="backup-action-card">
+        <div class="backup-action-icon">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">download</span>
+        </div>
+        Export Database
+      </a>
+      <button id="import-db-btn" class="backup-action-card">
+        <div class="backup-action-icon">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">upload</span>
+        </div>
+        Import Database
+      </button>
+      <input type="file" id="import-db-input" accept=".db" style="display:none">
     </div>
   </div>
 
-  <div style="display: flex; justify-content: flex-end;">
+  <!-- Save -->
+  <div class="settings-save-bar">
     <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
   </div>
+
 </main>
+
+  </div><!-- /.editorial-page-content -->
+</div><!-- /.editorial-page -->
+
+<!-- Mobile Bottom Nav -->
+<nav class="editorial-bottom-nav">
+  <a href="/" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">home</span>
+    Home
+  </a>
+  <a href="/planner.html" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">menu_book</span>
+    Plans
+  </a>
+  <a href="/pantry.html" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">inventory_2</span>
+    Pantry
+  </a>
+  <a href="/settings.html" class="editorial-bottom-nav-item active">
+    <span class="material-symbols-outlined">settings</span>
+    Settings
+  </a>
+</nav>
 
 <div id="toast-container" class="toast-container"></div>
 
@@ -163,7 +435,7 @@
 
   (async () => {
     const saveBtn = document.getElementById('save-settings-btn');
-    const options = document.querySelectorAll('.provider-option');
+    const options = document.querySelectorAll('.provider-card');
     const antKeyInput = document.getElementById('anthropic-key');
     const gemKeyInput = document.getElementById('gemini-key');
     const modelSelect = document.getElementById('model-select');
@@ -232,6 +504,10 @@
     options.forEach(opt => {
       opt.addEventListener('click', () => {
         updateSelection(opt.dataset.provider);
+      });
+      // Prevent clicking the API key input from toggling the card
+      opt.querySelectorAll('.provider-key-input').forEach(inp => {
+        inp.addEventListener('click', e => e.stopPropagation());
       });
     });
 

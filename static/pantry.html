@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pantry — KitchenAid</title>
+  <title>Pantry — The Editorial Kitchen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
   <link rel="stylesheet" href="/css/reset.css">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/editorial.css">
   <script src="/js/theme.js"></script>
   <style>
-    .pantry-container { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem; }
     .add-form {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -20,32 +24,6 @@
       align-items: flex-end;
     }
     .add-form .form-group { margin: 0; flex: 1; }
-    .pantry-table {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: calc(var(--radius)*1.5);
-      overflow: hidden;
-    }
-    .pantry-search {
-      padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .pantry-list { list-style: none; padding: 0; margin: 0; }
-    .pantry-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.7rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
-    .pantry-item:last-child { border-bottom: none; }
-    .pantry-item-name { flex: 1; font-weight: 500; }
-    .pantry-item-price { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
-    .pantry-item-edit { display: none; flex: 1; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-    .pantry-item-edit .form-input { font-size: 0.85rem; padding: 0.3rem 0.5rem; }
-    .price-lookup-btn { font-size: 0.8rem; padding: 0.15rem 0.4rem; color: var(--muted); }
-    .price-lookup-btn:hover { color: var(--brand); }
 
     /* AH picker modal body */
     .ah-product-list { display: flex; flex-direction: column; gap: 0; max-height: 420px; overflow-y: auto; }
@@ -64,9 +42,6 @@
     .ah-product-size { font-size: 0.78rem; color: var(--muted); }
     .ah-product-price { font-size: 0.9rem; font-weight: 600; color: var(--brand); white-space: nowrap; }
     .ah-picker-loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
-    .pantry-item.editing .pantry-item-view { display: none; }
-    .pantry-item.editing .pantry-item-edit { display: flex; }
-    .pantry-item-view { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
     .empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
     .btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
     .pantry-filter-btn {
@@ -95,56 +70,134 @@
     .sm-search-result:hover { background:var(--hover-bg) }
     .sm-dup-names { display:flex;align-items:center;gap:.5rem;font-size:.88rem;margin-bottom:.3rem }
     .sm-dup-keep { display:flex;gap:.75rem;font-size:.84rem;padding-left:1.4rem }
+
+    /* Grid layout */
+    .pantry-page-content { padding: 1.5rem 2rem; }
+    .pantry-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:1.25rem; }
+    .pantry-header h1 { font-family:var(--font-headline); font-size:1.6rem; font-weight:700; }
+    .pantry-toolbar { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .pantry-item-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:1rem; }
+    .pantry-card { background:var(--surface); border:1px solid var(--border); border-radius:.75rem; overflow:hidden; transition:box-shadow .15s; }
+    .pantry-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .pantry-card-image { position:relative; aspect-ratio:1; background:var(--surface-low); overflow:hidden; }
+    .pantry-card-image img { width:100%; height:100%; object-fit:cover; }
+    .pantry-card-img-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--outline); opacity:.35; }
+    .pantry-card-img-placeholder .material-symbols-outlined { font-size:2rem; }
+    .pantry-img-btn { position:absolute; bottom:.35rem; right:.35rem; background:rgba(255,255,255,.9); border:none; border-radius:50%; width:1.5rem; height:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity .15s; z-index:1; }
+    .pantry-img-btn .material-symbols-outlined { font-size:.8rem; }
+    .pantry-card:hover .pantry-img-btn { opacity:1; }
+    .pantry-card-body { padding:.6rem .7rem; }
+    .pantry-card-name { font-size:.82rem; font-weight:600; line-height:1.2; margin-bottom:.2rem; }
+    .pantry-card-price { font-size:.72rem; color:var(--muted); margin-bottom:.35rem; }
+    .pantry-card-actions { display:flex; gap:.15rem; }
+    .pantry-card-edit { padding:.6rem .7rem; }
+    .pantry-card.editing .pantry-item-view { display:none; }
+    .pantry-card.editing .pantry-item-edit { display:block !important; }
   </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/" class="site-logo">Kitchen<span>Aid</span></a>
-    <nav class="header-nav">
-      <a href="/" class="btn btn-secondary btn-icon" title="Recipes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
-      <a href="/planner.html" class="btn btn-secondary btn-icon" title="Planner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></a>
-      <a href="/settings.html" class="btn btn-secondary btn-icon" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
-      <label class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><input type="checkbox" id="theme-toggle-btn"><span class="theme-toggle-track"><svg class="toggle-icon toggle-sun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="currentColor"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="theme-toggle-thumb"></span><svg class="toggle-icon toggle-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10A5.5 5.5 0 0 1 6 2.5a.49.49 0 0 0-.6-.65A6 6 0 1 0 14.15 10.5a.49.49 0 0 0-.65-.5z" fill="currentColor"/></svg></span></label>
-    </nav>
+<!-- Desktop Sidebar -->
+<aside class="editorial-sidebar">
+  <div class="editorial-sidebar-brand">
+    <h1>The Editorial Kitchen</h1>
+    <p>Curated Atelier</p>
   </div>
-</header>
+  <nav class="editorial-sidebar-nav">
+    <a href="/" class="editorial-nav-link">
+      <span class="material-symbols-outlined">skillet</span>
+      Recipes
+    </a>
+    <a href="/planner.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">calendar_month</span>
+      Planner
+    </a>
+    <a href="/pantry.html" class="editorial-nav-link active">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      Pantry
+    </a>
+    <a href="/add.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">add_circle</span>
+      Add Recipe
+    </a>
+    <a href="/settings.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">settings</span>
+      Settings
+    </a>
+  </nav>
+</aside>
 
-<main class="pantry-container">
-  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
-    <h1 class="page-title"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg> Pantry</h1>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <button id="smart-match-btn" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>Smart Match</button>
-      <button id="refresh-unpriced-btn" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Price Unpriced</button>
-      <button id="refresh-prices-btn" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh All Prices</button>
+<div class="editorial-page">
+
+  <!-- Top Nav -->
+  <header class="editorial-topnav">
+    <div class="editorial-topnav-inner">
+      <span class="editorial-topnav-brand">Pantry</span>
+      <div class="editorial-topnav-actions">
+        <button id="theme-toggle-btn" class="editorial-icon-btn" title="Switch to dark mode">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
+        <a href="/settings.html" class="editorial-icon-btn" title="Settings">
+          <span class="material-symbols-outlined">settings</span>
+        </a>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Add form -->
-  <div class="add-form">
-    <div class="form-group">
-      <label class="form-label" for="new-name">Ingredient name *</label>
-      <input type="text" id="new-name" class="form-input" placeholder="e.g. flour">
+  <div class="editorial-page-content pantry-page-content">
+    <div class="pantry-header">
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button id="smart-match-btn" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>Smart Match</button>
+        <button id="refresh-unpriced-btn" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Price Unpriced</button>
+        <button id="refresh-prices-btn" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.35rem"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh All Prices</button>
+        <button id="find-all-images-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:.35rem">image_search</span>Find All Images</button>
+      </div>
     </div>
-    <button id="add-btn" class="btn btn-primary">Add</button>
-  </div>
 
-  <!-- Search + list -->
-  <div class="pantry-table">
-    <div class="pantry-search" style="display:flex;flex-direction:column;gap:.5rem">
-      <input type="search" id="search-input" class="form-input" placeholder="Search pantry…" autocomplete="off">
+    <!-- Add form -->
+    <div class="add-form">
+      <div class="form-group">
+        <label class="form-label" for="new-name">Ingredient name *</label>
+        <input type="text" id="new-name" class="form-input" placeholder="e.g. flour">
+      </div>
+      <button id="add-btn" class="btn btn-primary">Add</button>
+    </div>
+
+    <!-- Toolbar: search + filters -->
+    <div class="pantry-toolbar">
+      <input type="search" id="search-input" class="form-input" placeholder="Search pantry…" autocomplete="off" style="flex:1;min-width:180px;max-width:320px">
       <div id="pantry-filters" style="display:flex;gap:.35rem;flex-wrap:wrap">
         <button class="pantry-filter-btn active" data-filter="all">All</button>
         <button class="pantry-filter-btn" data-filter="unpriced">Unpriced</button>
         <button class="pantry-filter-btn" data-filter="priced">Priced</button>
       </div>
     </div>
-    <ul class="pantry-list" id="pantry-list">
-      <li class="empty-state">Loading…</li>
-    </ul>
+
+    <!-- Grid -->
+    <div id="pantry-grid" class="pantry-item-grid"></div>
   </div>
-</main>
+
+</div><!-- /editorial-page -->
+
+<!-- Mobile Bottom Nav -->
+<nav class="editorial-bottom-nav">
+  <a href="/" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">home</span>
+    Home
+  </a>
+  <a href="/planner.html" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">menu_book</span>
+    Plans
+  </a>
+  <a href="/pantry.html" class="editorial-bottom-nav-item active">
+    <span class="material-symbols-outlined">inventory_2</span>
+    Pantry
+  </a>
+  <a href="/add.html" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">add_box</span>
+    Add
+  </a>
+</nav>
 
 <div id="toast-container" class="toast-container"></div>
 
@@ -195,6 +248,21 @@
   </div>
 </div>
 
+<!-- Image Search Modal -->
+<div id="img-search-modal" class="modal-overlay">
+  <div class="modal" style="width:min(600px,96vw)">
+    <div class="modal-header">
+      <h2 class="modal-title">Change Image: <span id="img-search-name"></span></h2>
+      <button class="modal-close btn btn-ghost btn-icon" id="img-search-close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="display:flex;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid var(--border)">
+      <input id="img-search-input" type="text" class="form-input" placeholder="Search images…" style="flex:1">
+      <button id="img-search-btn" class="btn btn-primary" style="white-space:nowrap">Search</button>
+    </div>
+    <div id="img-search-results" style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <script src="/js/api.js"></script>
 <script>
 (async () => {
@@ -237,7 +305,7 @@
       showToast('Failed to load pantry: ' + e.message, true);
       items = [];
     }
-    renderList(document.getElementById('search-input').value);
+    renderGrid(document.getElementById('search-input').value);
   }
 
   function applyFilter(it) {
@@ -246,8 +314,8 @@
     return true;
   }
 
-  function renderList(query = '') {
-    const list = document.getElementById('pantry-list');
+  function renderGrid(query = '') {
+    const grid = document.getElementById('pantry-grid');
     const q = query.toLowerCase();
     const filtered = items.filter(it => it.name.toLowerCase().includes(q) && applyFilter(it));
 
@@ -255,29 +323,46 @@
       const msg = items.length === 0 ? 'No pantry items yet. Add one above.'
         : activeFilter !== 'all' ? `No ${activeFilter} items${q ? ' matching your search' : ''}.`
         : 'No results.';
-      list.innerHTML = `<li class="empty-state">${msg}</li>`;
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">${msg}</div>`;
       return;
     }
 
-    list.innerHTML = filtered.map(it => `
-      <li class="pantry-item" data-id="${it.id}">
-        <div class="pantry-item-view">
-          <span class="pantry-item-name">${escHtml(it.name)}</span>
-          <span class="pantry-item-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</span>
-          <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" data-id="${it.id}" data-name="${escHtml(it.name)}" title="Look up price on AH">€</button>
-          <button class="btn btn-ghost btn-icon edit-btn" title="Edit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button class="btn btn-ghost btn-icon delete-btn" title="Delete" style="color:#dc2626"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+    grid.innerHTML = filtered.map(it => `
+      <div class="pantry-card" data-id="${it.id}">
+        <div class="pantry-card-image" title="Change image">
+          ${it.image_url
+            ? `<img src="${escHtml(it.image_url)}" alt="${escHtml(it.name)}" loading="lazy">`
+            : `<span class="pantry-card-img-placeholder"><span class="material-symbols-outlined">grocery</span></span>`
+          }
+          <button class="pantry-img-btn change-img-btn" data-id="${it.id}" title="Change image">
+            <span class="material-symbols-outlined">photo_camera</span>
+          </button>
         </div>
-        <div class="pantry-item-edit">
-          <input type="text" class="form-input edit-name" value="${escHtml(it.name)}" placeholder="Name" style="flex:1;min-width:120px">
-          <input type="number" class="form-input edit-price" value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€ price" style="width:90px">
-          <input type="text" class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}" placeholder="e.g. 300 g" style="width:100px">
-          <button class="btn btn-primary btn-sm save-edit-btn">Save</button>
-          <button class="btn btn-secondary btn-sm cancel-edit-btn">Cancel</button>
+        <!-- view mode -->
+        <div class="pantry-card-body pantry-item-view">
+          <div class="pantry-card-name">${escHtml(it.name)}</div>
+          <div class="pantry-card-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</div>
+          <div class="pantry-card-actions">
+            <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" data-id="${it.id}" data-name="${escHtml(it.name)}" title="AH Price">€</button>
+            <button class="btn btn-ghost btn-icon btn-sm edit-btn" title="Edit"><span class="material-symbols-outlined" style="font-size:0.9rem">edit</span></button>
+            <button class="btn btn-ghost btn-icon btn-sm delete-btn" title="Delete" style="color:#dc2626"><span class="material-symbols-outlined" style="font-size:0.9rem">delete</span></button>
+          </div>
         </div>
-      </li>`).join('');
+        <!-- edit mode (hidden) -->
+        <div class="pantry-card-edit pantry-item-edit" style="display:none">
+          <input type="text" class="form-input edit-name" value="${escHtml(it.name)}" placeholder="Name" style="width:100%;font-size:0.8rem;padding:0.25rem 0.4rem">
+          <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
+            <input type="number" class="form-input edit-price" value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
+            <input type="text" class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}" placeholder="300 g" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
+          </div>
+          <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
+            <button class="btn btn-primary btn-sm save-edit-btn" style="flex:1;font-size:0.75rem">Save</button>
+            <button class="btn btn-secondary btn-sm cancel-edit-btn" style="flex:1;font-size:0.75rem">Cancel</button>
+          </div>
+        </div>
+      </div>`).join('');
 
-    list.querySelectorAll('.pantry-item').forEach(el => {
+    grid.querySelectorAll('.pantry-card').forEach(el => {
       const id = parseInt(el.dataset.id, 10);
       const item = items.find(it => it.id === id);
 
@@ -291,12 +376,12 @@
       });
 
       el.querySelector('.save-edit-btn').addEventListener('click', async () => {
-        const name           = normalizeName(el.querySelector('.edit-name').value);
-        const price          = parseFloat(el.querySelector('.edit-price').value) || 0;
+        const name            = normalizeName(el.querySelector('.edit-name').value);
+        const price           = parseFloat(el.querySelector('.edit-price').value) || 0;
         const price_unit_size = el.querySelector('.edit-price-size').value.trim();
         if (!name) { showToast('Name is required', true); return; }
         try {
-          await api.updatePantryItem(id, { name, price, price_unit_size });
+          await api.updatePantryItem(id, { name, price, price_unit_size, image_url: item.image_url });
           await loadItems();
         } catch (e) {
           showToast('Update failed: ' + e.message, true);
@@ -315,6 +400,15 @@
         } catch (e) {
           showToast('Delete failed: ' + e.message, true);
         }
+      });
+
+      el.querySelectorAll('.change-img-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const btnId = parseInt(btn.dataset.id, 10);
+          const btnItem = items.find(it => it.id === btnId);
+          if (btnItem) openImgSearch(btnId, btnItem.name);
+        });
       });
     });
   }
@@ -342,7 +436,7 @@
   // ── Search ────────────────────────────────────────────────────────────────
 
   document.getElementById('search-input').addEventListener('input', e => {
-    renderList(e.target.value);
+    renderGrid(e.target.value);
   });
 
   document.getElementById('pantry-filters').addEventListener('click', e => {
@@ -350,7 +444,7 @@
     if (!btn) return;
     activeFilter = btn.dataset.filter;
     document.querySelectorAll('.pantry-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
-    renderList(document.getElementById('search-input').value);
+    renderGrid(document.getElementById('search-input').value);
   });
 
   // ── AH Price Picker ───────────────────────────────────────────────────────
@@ -395,6 +489,7 @@
             name,
             price:           p.price,
             price_unit_size: p.salesUnitSize,
+            image_url:       ahTargetItem?.image_url || '',
           });
           await loadItems();
           showToast(`Price set: €${p.price.toFixed(2)} / ${p.salesUnitSize}`);
@@ -432,6 +527,68 @@
     ahModal.classList.add('open');
     ahSearchInput.select();
     await runAHSearch(itemName);
+  }
+
+  // ── Image Search ──────────────────────────────────────────────────────────
+  const imgModal         = document.getElementById('img-search-modal');
+  const imgSearchName    = document.getElementById('img-search-name');
+  const imgSearchInput   = document.getElementById('img-search-input');
+  const imgSearchBtn     = document.getElementById('img-search-btn');
+  const imgSearchResults = document.getElementById('img-search-results');
+  let imgTargetId = null;
+
+  document.getElementById('img-search-close').addEventListener('click', () => imgModal.classList.remove('open'));
+  imgModal.addEventListener('click', e => { if (e.target === imgModal) imgModal.classList.remove('open'); });
+
+  async function runImgSearch(q) {
+    if (!q) return;
+    imgSearchResults.innerHTML = `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:2rem;color:var(--muted)"><div class="spinner"></div> Searching…</div>`;
+    try {
+      const data = await api.searchImages(q);
+      const images = data.images || [];
+      if (images.length === 0) {
+        imgSearchResults.innerHTML = `<p style="grid-column:1/-1;color:var(--muted);text-align:center;font-size:.9rem">No images found.</p>`;
+        return;
+      }
+      imgSearchResults.innerHTML = images.map((img, i) =>
+        `<div class="img-result-thumb" data-idx="${i}" style="cursor:pointer;border-radius:.5rem;overflow:hidden;aspect-ratio:1;background:var(--surface-low)">
+          <img src="${escHtml(img.url)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;transition:opacity .15s" onerror="this.parentElement.style.display='none'">
+        </div>`
+      ).join('');
+      imgSearchResults.querySelectorAll('.img-result-thumb').forEach((el, i) => {
+        el.addEventListener('click', async () => {
+          const url = images[i].url;
+          const item = items.find(it => it.id === imgTargetId);
+          if (!item) return;
+          imgModal.classList.remove('open');
+          try {
+            await api.updatePantryItem(imgTargetId, {
+              name: item.name,
+              price: item.price || 0,
+              price_unit_size: item.price_unit_size || '',
+              image_url: url,
+            });
+            await loadItems();
+            showToast('Image updated');
+          } catch(e) {
+            showToast('Failed to update image: ' + e.message, true);
+          }
+        });
+      });
+    } catch(e) {
+      imgSearchResults.innerHTML = `<p style="grid-column:1/-1;color:#dc2626;text-align:center;font-size:.9rem">${escHtml(e.message)}</p>`;
+    }
+  }
+
+  imgSearchBtn.addEventListener('click', () => runImgSearch(imgSearchInput.value.trim()));
+  imgSearchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runImgSearch(imgSearchInput.value.trim()); });
+
+  function openImgSearch(itemId, itemName) {
+    imgTargetId = itemId;
+    imgSearchName.textContent = itemName;
+    imgSearchInput.value = itemName;
+    imgModal.classList.add('open');
+    runImgSearch(itemName);
   }
 
   // ── Smart Match ───────────────────────────────────────────────────────────
@@ -1088,9 +1245,10 @@
     try {
       for (const r of toUpdate) {
         await api.updatePantryItem(r.item.id, {
-          name:           r.item.name,
-          price:          r.best.price,
+          name:            r.item.name,
+          price:           r.best.price,
           price_unit_size: r.best.salesUnitSize,
+          image_url:       r.item.image_url || '',
         });
       }
       await loadItems();
@@ -1107,6 +1265,43 @@
   document.getElementById('refresh-unpriced-btn').addEventListener('click', () => {
     const unpriced = items.filter(it => !(it.price > 0));
     openPriceRefresh(unpriced);
+  });
+
+  // ── Find All Images ───────────────────────────────────────────────────────
+
+  document.getElementById('find-all-images-btn').addEventListener('click', async () => {
+    const missing = items.filter(it => !it.image_url);
+    if (missing.length === 0) { showToast('All items already have images'); return; }
+
+    const btn = document.getElementById('find-all-images-btn');
+    btn.disabled = true;
+
+    let done = 0, failed = 0;
+    for (const item of missing) {
+      btn.textContent = `Finding… ${done + failed + 1}/${missing.length}`;
+      try {
+        const data = await api.searchImages(item.name);
+        const images = (data.images || []).filter(img => img.url);
+        if (images.length === 0) { failed++; continue; }
+        const url = images[0].url;
+        await api.updatePantryItem(item.id, {
+          name: item.name,
+          price: item.price || 0,
+          price_unit_size: item.price_unit_size || '',
+          image_url: url,
+        });
+        item.image_url = url;
+        done++;
+        renderGrid(document.getElementById('search-input').value);
+      } catch(_) {
+        failed++;
+      }
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:.35rem">image_search</span>Find All Images';
+    showToast(`Done: ${done} images found${failed ? `, ${failed} failed` : ''}`);
+    await loadItems();
   });
 
   // ── Init ─────────────────────────────────────────────────────────────────

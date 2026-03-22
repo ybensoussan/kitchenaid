@@ -316,13 +316,8 @@
                  ↗ Original source
                </a>`
             : ''}
-          <button id="hero-image-search-btn" class="btn btn-secondary btn-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Search for Image
-          </button>
         </div>
       </div>`;
-
-    document.getElementById('hero-image-search-btn')?.addEventListener('click', openImageSearch);
 
     // Wire editable fields — must be re-done each time renderHero replaces the DOM
     const _titleEl = document.getElementById('editable-title');
@@ -723,7 +718,9 @@
 
   document.getElementById('export-json-link')?.setAttribute('href', `/api/recipes/${recipeId}/export?format=json`);
   document.getElementById('export-html-link')?.setAttribute('href', `/api/recipes/${recipeId}/export?format=html`);
-  // ── Photo upload ──────────────────────────────────────────────────────────
+  // ── Photo upload / search ─────────────────────────────────────────────────
+
+  document.getElementById('photo-search-btn')?.addEventListener('click', openImageSearch);
 
   document.getElementById('photo-upload-input')?.addEventListener('change', async e => {
     const file = e.target.files[0];
@@ -1100,9 +1097,9 @@
     let wakeLock    = null;
     let timers      = []; // { id, label, seconds, initial, running }
 
-    function addTimer(initialSeconds = 0, label = 'Timer') {
+    function addTimer(initialSeconds = 300, label = 'Timer') {
       const id = Date.now() + Math.random();
-      timers.push({ id, label, seconds: initialSeconds, initial: initialSeconds, running: false });
+      timers.push({ id, label, seconds: initialSeconds, initial: initialSeconds, running: false, started: false });
       renderTimers();
     }
 
@@ -1116,7 +1113,7 @@
         const mm = Math.floor(t.seconds / 60);
         const ss = t.seconds % 60;
         const timeStr = `${mm}:${ss.toString().padStart(2, '0')}`;
-        const isDone = t.seconds <= 0;
+        const isDone = t.started && t.seconds <= 0;
 
         return `
           <div class="cook-timer-card${isDone ? ' done' : ''}${t.running ? ' running' : ''}" data-id="${t.id}">
@@ -1152,12 +1149,14 @@
 
         el.querySelector('.timer-toggle-btn')?.addEventListener('click', () => {
           timer.running = !timer.running;
+          if (timer.running) timer.started = true;
           renderTimers();
         });
 
         el.querySelector('.timer-reset-btn').addEventListener('click', () => {
           timer.seconds = timer.initial;
           timer.running = false;
+          timer.started = false;
           renderTimers();
         });
 
@@ -1259,7 +1258,7 @@
       populateIngredients();
       populateSteps();
       syncUnitBtns();
-      if (timers.length === 0) addTimer(0, 'Timer 1');
+      if (timers.length === 0) addTimer(300, 'Timer 1');
       renderTimers();
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
@@ -1303,7 +1302,7 @@
       });
     });
 
-    document.getElementById('add-timer-btn')?.addEventListener('click', () => addTimer(0, `Timer ${timers.length + 1}`));
+    document.getElementById('add-timer-btn')?.addEventListener('click', () => addTimer(300, `Timer ${timers.length + 1}`));
     document.getElementById('cook-exit-btn')?.addEventListener('click', exit);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && overlay.classList.contains('active')) exit();

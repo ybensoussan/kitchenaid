@@ -104,7 +104,7 @@
 }
 .recipe-card:hover .card-fav-btn,
 .card-fav-btn.active { opacity: 1; }
-.card-fav-btn.active { color: #ef4444; background: rgba(0,0,0,.5); }
+.card-fav-btn.active { color: #90ba76; background: rgba(0,0,0,.5); }
 
 /* ── Drag-and-drop states ── */
 .recipe-card[draggable="true"] { cursor: grab; }
@@ -114,10 +114,10 @@
 
 /* ── Favorites filter button ── */
 .fav-filter-btn { color: var(--brand); }
-.fav-filter-btn.active { background: #fef2f2; border-color: #ef4444; color: #ef4444; }
+.fav-filter-btn.active { background: var(--primary-fixed); border-color: var(--primary); color: var(--primary); }
 
 /* ── Favorite button on recipe page ── */
-#fav-btn.active { color: #ef4444; }
+#fav-btn.active { color: var(--primary); }
 
 /* ── Search / filters bar ── */
 .toolbar {
@@ -141,5 +141,5 @@
 .search-input:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(224,92,46,.12);
+  box-shadow: 0 0 0 3px rgba(81,100,65,.2);
 }

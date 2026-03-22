@@ -9,8 +9,11 @@
 
   function applyTheme() {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const cb = document.getElementById('theme-toggle-btn');
-    if (cb) cb.checked = dark;
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+    const icon = btn.querySelector('.material-symbols-outlined');
+    if (icon) icon.textContent = dark ? 'light_mode' : 'dark_mode';
+    btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
   }
 
   function toggle() {
@@ -28,6 +31,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     applyTheme();
     document.getElementById('theme-toggle-btn')
-      ?.addEventListener('change', toggle);
+      ?.addEventListener('click', toggle);
   });
 })();
