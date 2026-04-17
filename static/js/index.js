@@ -1,9 +1,10 @@
 // Main page: load recipes, render grid, wire search + import.
 
 (async () => {
-  const grid    = document.getElementById('recipe-grid');
-  const search  = document.getElementById('search-input');
-  const countEl = document.getElementById('recipe-count');
+  const grid          = document.getElementById('recipe-grid');
+  const search        = document.getElementById('search-input');
+  const searchMobile  = document.getElementById('content-search-input');
+  const countEl       = document.getElementById('recipe-count');
 
   let allRecipes = [];
   let activeTag = null;
@@ -19,7 +20,8 @@
   function renderCard(r) {
     const prep = formatTime(r.prep_time);
     const cook = formatTime(r.cook_time);
-    const times = [prep && `Prep ${prep}`, cook && `Cook ${cook}`].filter(Boolean);
+    const totalTime = prep || cook;
+    const primaryTag = (r.tags || [])[0];
     const draggable = !activeTag ? 'draggable="true"' : '';
 
     return `
@@ -27,23 +29,20 @@
         <div class="recipe-card-image">
           ${r.image_url
             ? `<img src="${escHtml(r.image_url)}" alt="${escHtml(r.title)}" loading="lazy">`
-            : `<span class="recipe-card-image-placeholder">🍽</span>`
+            : `<span class="recipe-card-image-placeholder"><span class="material-symbols-outlined">restaurant</span></span>`
           }
           <button class="card-fav-btn${r.favorited ? ' active' : ''}" data-id="${r.id}" title="Favorite">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="${r.favorited ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="material-symbols-outlined" style="${r.favorited ? "font-variation-settings:'FILL' 1" : ''}">favorite</span>
           </button>
         </div>
         <div class="recipe-card-body">
-          <h2 class="recipe-card-title">${escHtml(r.title)}</h2>
-          ${(r.tags || []).length > 0 ? `
-            <div class="card-tags">
-              ${r.tags.slice(0, 3).map(t => `<span class="card-tag">${escHtml(t)}</span>`).join('')}${r.tags.length > 3 ? `<span class="card-tag card-tag-more">+${r.tags.length - 3}</span>` : ''}
-            </div>
-          ` : ''}
-          ${r.description ? `<p class="recipe-card-desc">${escHtml(r.description)}</p>` : ''}
+          <div class="recipe-card-title-row">
+            <h2 class="recipe-card-title">${escHtml(r.title)}</h2>
+          </div>
           <div class="recipe-card-meta">
-            ${times.map(t => `<span class="recipe-card-meta-item">${escHtml(t)}</span>`).join('')}
-            ${r.base_servings ? `<span class="recipe-card-meta-item">Serves ${r.base_servings}</span>` : ''}
+            ${totalTime ? `<span class="recipe-card-meta-item"><span class="material-symbols-outlined">schedule</span> ${escHtml(totalTime.toUpperCase())}</span>` : ''}
+            ${primaryTag ? `<span class="recipe-card-meta-item"><span class="material-symbols-outlined">restaurant</span> ${escHtml(primaryTag.toUpperCase())}</span>` : ''}
+            ${r.base_servings && !totalTime && !primaryTag ? `<span class="recipe-card-meta-item"><span class="material-symbols-outlined">people</span> SERVES ${r.base_servings}</span>` : ''}
           </div>
         </div>
       </article>`;
@@ -73,7 +72,8 @@
         if (!recipe) return;
         recipe.favorited = !recipe.favorited;
         btn.classList.toggle('active', recipe.favorited);
-        btn.querySelector('svg path').setAttribute('fill', recipe.favorited ? 'currentColor' : 'none');
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (icon) icon.style.fontVariationSettings = recipe.favorited ? "'FILL' 1" : '';
         // If favorites filter is active and recipe was unfavorited, re-filter
         if (activeTag === '__favorites__' && !recipe.favorited) filter();
         try {
@@ -82,7 +82,7 @@
           // revert on failure
           recipe.favorited = !recipe.favorited;
           btn.classList.toggle('active', recipe.favorited);
-          btn.querySelector('svg path').setAttribute('fill', recipe.favorited ? 'currentColor' : 'none');
+          if (icon) icon.style.fontVariationSettings = recipe.favorited ? "'FILL' 1" : '';
         }
       });
     });
@@ -133,7 +133,7 @@
   }
 
   function filter() {
-    const q = search.value || '';
+    const q = (search && search.value) || (searchMobile && searchMobile.value) || '';
     const lq = q.toLowerCase();
     
     let filtered = allRecipes;
@@ -202,6 +202,7 @@
 
   // Search
   search?.addEventListener('input', filter);
+  searchMobile?.addEventListener('input', filter);
 
   // Dropdown logic
   const dropdown = document.getElementById('add-recipe-dropdown');

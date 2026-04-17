@@ -450,7 +450,7 @@ body {
 
 .recipe-card-image {
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 4;
   border-radius: 1rem;
   overflow: hidden;
   position: relative;
@@ -577,6 +577,38 @@ body {
 
 /* ── 11. TOOLBAR / SEARCH AREA ── */
 .toolbar { display: none; } /* hidden — search is in topnav */
+
+/* Content-area search bar (visible on mobile where topnav search is hidden) */
+.content-search-wrap {
+  display: none;
+  position: relative;
+  margin-bottom: 1rem;
+}
+.content-search-wrap .material-symbols-outlined {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--outline);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+.content-search-input {
+  width: 100%;
+  background: var(--surface-low);
+  border: 1px solid rgba(197,200,188,0.25);
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem 0.65rem 2.6rem;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  color: var(--on-surface);
+  transition: box-shadow var(--transition);
+}
+.content-search-input::placeholder { color: var(--outline); }
+.content-search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(81,100,65,0.2);
+}
 .tag-filters {
   display: flex !important;
   gap: 0.2rem;
@@ -1288,4 +1320,12 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 
 @media (max-width: 500px) {
   .editorial-search-wrap { display: none; }
+  .content-search-wrap { display: block; }
+  .recipe-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .recipe-card-image { aspect-ratio: 3 / 2; }
+  .recipe-card-title { font-size: 0.82rem; }
+  .recipe-card-meta { font-size: 0.7rem; }
 }

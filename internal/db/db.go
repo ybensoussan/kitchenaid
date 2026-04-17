@@ -61,6 +61,7 @@ func (s *Store) migrate() error {
 		`ALTER TABLE pantry_items ADD COLUMN price           REAL NOT NULL DEFAULT 0`,
 		`ALTER TABLE pantry_items ADD COLUMN price_unit_size TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE ingredients ADD COLUMN pantry_item_id INTEGER REFERENCES pantry_items(id) ON DELETE SET NULL`,
+		`ALTER TABLE pantry_items ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`,
 	} {
 		s.db.Exec(stmt) //nolint:errcheck
 	}

@@ -77,7 +77,11 @@
     .pantry-header h1 { font-family:var(--font-headline); font-size:1.6rem; font-weight:700; }
     .pantry-toolbar { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
     .pantry-item-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:1rem; }
-    .pantry-card { background:var(--surface); border:1px solid var(--border); border-radius:.75rem; overflow:hidden; transition:box-shadow .15s; }
+    .pantry-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:.75rem;
+      overflow:hidden; transition:box-shadow .15s;
+      content-visibility:auto; contain-intrinsic-size:200px 220px;
+    }
     .pantry-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
     .pantry-card-image { position:relative; aspect-ratio:1; background:var(--surface-low); overflow:hidden; }
     .pantry-card-image img { width:100%; height:100%; object-fit:cover; }
@@ -297,121 +301,216 @@
   }
 
   let activeFilter = 'all';
+  const grid        = document.getElementById('pantry-grid');
+  const searchInput = document.getElementById('search-input');
 
   async function loadItems() {
+    if (!items.length) {
+      grid.innerHTML = `<div class="empty-state pantry-empty-state" style="grid-column:1/-1">Loading pantry…</div>`;
+    }
     try {
       items = await api.listPantryItems();
     } catch (e) {
       showToast('Failed to load pantry: ' + e.message, true);
       items = [];
     }
-    renderGrid(document.getElementById('search-input').value);
+    renderGrid();
   }
 
-  function applyFilter(it) {
-    if (activeFilter === 'unpriced') return !(it.price > 0);
-    if (activeFilter === 'priced')   return it.price > 0;
-    return true;
+  // Route remote (http/https) image URLs through our caching proxy so they
+  // come off local disk on subsequent loads, downscaled to a thumbnail.
+  // The v= tag lets us invalidate the browser's immutable HTTP cache when we
+  // change proxy logic (e.g. thumbnail size). Bump on proxy behavior changes.
+  const IMG_PROXY_V = '2';
+  function proxyImg(u) {
+    if (!u) return '';
+    if (u[0] === '/') return u;
+    return '/img?u=' + encodeURIComponent(u) + '&v=' + IMG_PROXY_V;
   }
 
-  function renderGrid(query = '') {
-    const grid = document.getElementById('pantry-grid');
-    const q = query.toLowerCase();
-    const filtered = items.filter(it => it.name.toLowerCase().includes(q) && applyFilter(it));
+  // Build the inner HTML of a card (no outer wrapper — dataset lives on the wrapper).
+  function cardInner(it) {
+    return `<div class="pantry-card-image" title="Change image">
+        ${it.image_url
+          ? `<img src="${escHtml(proxyImg(it.image_url))}" alt="${escHtml(it.name)}" loading="lazy" decoding="async">`
+          : `<span class="pantry-card-img-placeholder"><span class="material-symbols-outlined">grocery</span></span>`
+        }
+        <button class="pantry-img-btn change-img-btn" title="Change image">
+          <span class="material-symbols-outlined">photo_camera</span>
+        </button>
+      </div>
+      <div class="pantry-card-body pantry-item-view">
+        <div class="pantry-card-name">${escHtml(it.name)}</div>
+        <div class="pantry-card-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</div>
+        <div class="pantry-card-actions">
+          <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" title="AH Price">€</button>
+          <button class="btn btn-ghost btn-icon btn-sm edit-btn" title="Edit"><span class="material-symbols-outlined" style="font-size:0.9rem">edit</span></button>
+          <button class="btn btn-ghost btn-icon btn-sm delete-btn" title="Delete" style="color:#dc2626"><span class="material-symbols-outlined" style="font-size:0.9rem">delete</span></button>
+        </div>
+      </div>
+      <div class="pantry-card-edit pantry-item-edit" style="display:none">
+        <input type="text" class="form-input edit-name" value="${escHtml(it.name)}" placeholder="Name" style="width:100%;font-size:0.8rem;padding:0.25rem 0.4rem">
+        <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
+          <input type="number" class="form-input edit-price" value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
+          <input type="text" class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}" placeholder="300 g" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
+        </div>
+        <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
+          <button class="btn btn-primary btn-sm save-edit-btn" style="flex:1;font-size:0.75rem">Save</button>
+          <button class="btn btn-secondary btn-sm cancel-edit-btn" style="flex:1;font-size:0.75rem">Cancel</button>
+        </div>
+      </div>`;
+  }
 
-    if (filtered.length === 0) {
-      const msg = items.length === 0 ? 'No pantry items yet. Add one above.'
-        : activeFilter !== 'all' ? `No ${activeFilter} items${q ? ' matching your search' : ''}.`
-        : 'No results.';
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">${msg}</div>`;
+  function buildCard(it) {
+    const card = document.createElement('div');
+    card.className = 'pantry-card';
+    card.dataset.id     = it.id;
+    card.dataset.name   = it.name.toLowerCase();
+    card.dataset.priced = it.price > 0 ? '1' : '0';
+    card.innerHTML = cardInner(it);
+    return card;
+  }
+
+  function patchCard(card, it) {
+    card.dataset.name   = it.name.toLowerCase();
+    card.dataset.priced = it.price > 0 ? '1' : '0';
+    card.classList.remove('editing');
+    card.innerHTML = cardInner(it);
+  }
+
+  function renderGrid() {
+    if (items.length === 0) {
+      grid.innerHTML = `<div class="empty-state pantry-empty-state" style="grid-column:1/-1">No pantry items yet. Add one above.</div>`;
       return;
     }
-
-    grid.innerHTML = filtered.map(it => `
-      <div class="pantry-card" data-id="${it.id}">
-        <div class="pantry-card-image" title="Change image">
-          ${it.image_url
-            ? `<img src="${escHtml(it.image_url)}" alt="${escHtml(it.name)}" loading="lazy">`
-            : `<span class="pantry-card-img-placeholder"><span class="material-symbols-outlined">grocery</span></span>`
-          }
-          <button class="pantry-img-btn change-img-btn" data-id="${it.id}" title="Change image">
-            <span class="material-symbols-outlined">photo_camera</span>
-          </button>
-        </div>
-        <!-- view mode -->
-        <div class="pantry-card-body pantry-item-view">
-          <div class="pantry-card-name">${escHtml(it.name)}</div>
-          <div class="pantry-card-price">${it.price > 0 ? `€${it.price.toFixed(2)} / ${escHtml(it.price_unit_size)}` : '—'}</div>
-          <div class="pantry-card-actions">
-            <button class="price-lookup-btn btn btn-ghost btn-icon btn-sm" data-id="${it.id}" data-name="${escHtml(it.name)}" title="AH Price">€</button>
-            <button class="btn btn-ghost btn-icon btn-sm edit-btn" title="Edit"><span class="material-symbols-outlined" style="font-size:0.9rem">edit</span></button>
-            <button class="btn btn-ghost btn-icon btn-sm delete-btn" title="Delete" style="color:#dc2626"><span class="material-symbols-outlined" style="font-size:0.9rem">delete</span></button>
-          </div>
-        </div>
-        <!-- edit mode (hidden) -->
-        <div class="pantry-card-edit pantry-item-edit" style="display:none">
-          <input type="text" class="form-input edit-name" value="${escHtml(it.name)}" placeholder="Name" style="width:100%;font-size:0.8rem;padding:0.25rem 0.4rem">
-          <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
-            <input type="number" class="form-input edit-price" value="${it.price > 0 ? it.price : ''}" step="0.01" placeholder="€" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
-            <input type="text" class="form-input edit-price-size" value="${escHtml(it.price_unit_size)}" placeholder="300 g" style="flex:1;font-size:0.8rem;padding:0.25rem 0.4rem">
-          </div>
-          <div style="display:flex;gap:0.3rem;margin-top:0.3rem">
-            <button class="btn btn-primary btn-sm save-edit-btn" style="flex:1;font-size:0.75rem">Save</button>
-            <button class="btn btn-secondary btn-sm cancel-edit-btn" style="flex:1;font-size:0.75rem">Cancel</button>
-          </div>
-        </div>
-      </div>`).join('');
-
-    grid.querySelectorAll('.pantry-card').forEach(el => {
-      const id = parseInt(el.dataset.id, 10);
-      const item = items.find(it => it.id === id);
-
-      el.querySelector('.edit-btn').addEventListener('click', () => {
-        el.classList.add('editing');
-        el.querySelector('.edit-name').focus();
-      });
-
-      el.querySelector('.cancel-edit-btn').addEventListener('click', () => {
-        el.classList.remove('editing');
-      });
-
-      el.querySelector('.save-edit-btn').addEventListener('click', async () => {
-        const name            = normalizeName(el.querySelector('.edit-name').value);
-        const price           = parseFloat(el.querySelector('.edit-price').value) || 0;
-        const price_unit_size = el.querySelector('.edit-price-size').value.trim();
-        if (!name) { showToast('Name is required', true); return; }
-        try {
-          await api.updatePantryItem(id, { name, price, price_unit_size, image_url: item.image_url });
-          await loadItems();
-        } catch (e) {
-          showToast('Update failed: ' + e.message, true);
-        }
-      });
-
-      el.querySelector('.price-lookup-btn').addEventListener('click', () => {
-        openAHPicker(id, item.name);
-      });
-
-      el.querySelector('.delete-btn').addEventListener('click', async () => {
-        if (!confirm(`Delete "${item.name}" from pantry?`)) return;
-        try {
-          await api.deletePantryItem(id);
-          await loadItems();
-        } catch (e) {
-          showToast('Delete failed: ' + e.message, true);
-        }
-      });
-
-      el.querySelectorAll('.change-img-btn').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          const btnId = parseInt(btn.dataset.id, 10);
-          const btnItem = items.find(it => it.id === btnId);
-          if (btnItem) openImgSearch(btnId, btnItem.name);
-        });
-      });
-    });
+    const frag = document.createDocumentFragment();
+    for (const it of items) frag.appendChild(buildCard(it));
+    grid.replaceChildren(frag);
+    applyVisibility();
   }
+
+  // Filter via display toggling — no DOM rebuild on search keystroke.
+  function applyVisibility() {
+    const q = (searchInput.value || '').toLowerCase().trim();
+    let visible = 0;
+    for (const card of grid.children) {
+      if (!card.dataset.id) continue;
+      let show = !q || card.dataset.name.includes(q);
+      if (show && activeFilter === 'unpriced') show = card.dataset.priced === '0';
+      else if (show && activeFilter === 'priced') show = card.dataset.priced === '1';
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }
+
+    let emptyEl = grid.querySelector('.pantry-empty-state');
+    if (visible === 0 && items.length > 0) {
+      if (!emptyEl) {
+        emptyEl = document.createElement('div');
+        emptyEl.className = 'empty-state pantry-empty-state';
+        emptyEl.style.gridColumn = '1/-1';
+        grid.appendChild(emptyEl);
+      }
+      emptyEl.textContent = activeFilter !== 'all'
+        ? `No ${activeFilter} items${q ? ' matching your search' : ''}.`
+        : 'No results.';
+    } else if (emptyEl) {
+      emptyEl.remove();
+    }
+  }
+
+  function insertCardSorted(it) {
+    const lower = it.name.toLowerCase();
+    const card  = buildCard(it);
+    for (const ref of grid.children) {
+      if (!ref.dataset.id) continue;
+      if (ref.dataset.name > lower) {
+        grid.insertBefore(card, ref);
+        return card;
+      }
+    }
+    grid.appendChild(card);
+    return card;
+  }
+
+  function findCard(id) {
+    return grid.querySelector(`.pantry-card[data-id="${id}"]`);
+  }
+
+  // ── Single delegated click handler for the whole grid ─────────────────────
+  grid.addEventListener('click', async (e) => {
+    const card = e.target.closest('.pantry-card');
+    if (!card) return;
+    const id = parseInt(card.dataset.id, 10);
+    const item = items.find(it => it.id === id);
+    if (!item) return;
+
+    if (e.target.closest('.edit-btn')) {
+      card.classList.add('editing');
+      card.querySelector('.edit-name')?.focus();
+      return;
+    }
+    if (e.target.closest('.cancel-edit-btn')) {
+      const nameEl  = card.querySelector('.edit-name');
+      const priceEl = card.querySelector('.edit-price');
+      const sizeEl  = card.querySelector('.edit-price-size');
+      if (nameEl)  nameEl.value  = item.name;
+      if (priceEl) priceEl.value = item.price > 0 ? item.price : '';
+      if (sizeEl)  sizeEl.value  = item.price_unit_size;
+      card.classList.remove('editing');
+      return;
+    }
+    if (e.target.closest('.save-edit-btn')) {
+      const name            = normalizeName(card.querySelector('.edit-name').value);
+      const price           = parseFloat(card.querySelector('.edit-price').value) || 0;
+      const price_unit_size = card.querySelector('.edit-price-size').value.trim();
+      if (!name) { showToast('Name is required', true); return; }
+      try {
+        const updated = await api.updatePantryItem(id, { name, price, price_unit_size, image_url: item.image_url });
+        if (updated) {
+          const idx = items.findIndex(i => i.id === id);
+          if (idx >= 0) items[idx] = updated;
+          patchCard(card, updated);
+          applyVisibility();
+        }
+      } catch (err) {
+        showToast('Update failed: ' + err.message, true);
+      }
+      return;
+    }
+    if (e.target.closest('.price-lookup-btn')) {
+      openAHPicker(id, item.name);
+      return;
+    }
+    if (e.target.closest('.delete-btn')) {
+      if (!confirm(`Delete "${item.name}" from pantry?`)) return;
+      try {
+        await api.deletePantryItem(id);
+        const idx = items.findIndex(i => i.id === id);
+        if (idx >= 0) items.splice(idx, 1);
+        card.remove();
+        applyVisibility();
+      } catch (err) {
+        showToast('Delete failed: ' + err.message, true);
+      }
+      return;
+    }
+    if (e.target.closest('.change-img-btn')) {
+      e.stopPropagation();
+      openImgSearch(id, item.name);
+      return;
+    }
+  });
+
+  // Enter inside edit fields saves.
+  grid.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const card = e.target.closest('.pantry-card.editing');
+    if (!card) return;
+    if (e.target.matches('.edit-name, .edit-price, .edit-price-size')) {
+      e.preventDefault();
+      card.querySelector('.save-edit-btn')?.click();
+    }
+  });
 
   // ── Add new item ──────────────────────────────────────────────────────────
 
@@ -420,10 +519,23 @@
     const name   = normalizeName(nameIn.value);
     if (!name) { showToast('Name is required', true); nameIn.focus(); return; }
     try {
-      await api.createPantryItem({ name });
+      const added = await api.createPantryItem({ name });
       nameIn.value = '';
       nameIn.focus();
-      await loadItems();
+      if (!added) return;
+      const idx = items.findIndex(it => it.id === added.id);
+      if (idx >= 0) {
+        items[idx] = added;
+        const card = findCard(added.id);
+        if (card) patchCard(card, added);
+      } else {
+        let pos = items.findIndex(it => it.name.toLowerCase() > added.name.toLowerCase());
+        if (pos === -1) pos = items.length;
+        items.splice(pos, 0, added);
+        grid.querySelector('.pantry-empty-state')?.remove();
+        insertCardSorted(added);
+      }
+      applyVisibility();
     } catch (e) {
       showToast('Add failed: ' + e.message, true);
     }
@@ -433,10 +545,12 @@
     if (e.key === 'Enter') document.getElementById('add-btn').click();
   });
 
-  // ── Search ────────────────────────────────────────────────────────────────
+  // ── Search (debounced, CSS-based filter — no DOM rebuild) ─────────────────
 
-  document.getElementById('search-input').addEventListener('input', e => {
-    renderGrid(e.target.value);
+  let searchTimer = null;
+  searchInput.addEventListener('input', () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyVisibility, 40);
   });
 
   document.getElementById('pantry-filters').addEventListener('click', e => {
@@ -444,7 +558,7 @@
     if (!btn) return;
     activeFilter = btn.dataset.filter;
     document.querySelectorAll('.pantry-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
-    renderGrid(document.getElementById('search-input').value);
+    applyVisibility();
   });
 
   // ── AH Price Picker ───────────────────────────────────────────────────────
@@ -485,13 +599,19 @@
         ahModal.classList.remove('open');
         try {
           const name = ahTargetItem?.name || '';
-          await api.updatePantryItem(ahTargetId, {
+          const updated = await api.updatePantryItem(ahTargetId, {
             name,
             price:           p.price,
             price_unit_size: p.salesUnitSize,
             image_url:       ahTargetItem?.image_url || '',
           });
-          await loadItems();
+          if (updated) {
+            const idx = items.findIndex(i => i.id === ahTargetId);
+            if (idx >= 0) items[idx] = updated;
+            const card = findCard(ahTargetId);
+            if (card) patchCard(card, updated);
+            applyVisibility();
+          }
           showToast(`Price set: €${p.price.toFixed(2)} / ${p.salesUnitSize}`);
         } catch (e) {
           showToast('Failed to set price: ' + e.message, true);
@@ -562,13 +682,19 @@
           if (!item) return;
           imgModal.classList.remove('open');
           try {
-            await api.updatePantryItem(imgTargetId, {
+            const updated = await api.updatePantryItem(imgTargetId, {
               name: item.name,
               price: item.price || 0,
               price_unit_size: item.price_unit_size || '',
               image_url: url,
             });
-            await loadItems();
+            if (updated) {
+              const idx = items.findIndex(i => i.id === imgTargetId);
+              if (idx >= 0) items[idx] = updated;
+              const card = findCard(imgTargetId);
+              if (card) patchCard(card, updated);
+              applyVisibility();
+            }
             showToast('Image updated');
           } catch(e) {
             showToast('Failed to update image: ' + e.message, true);
@@ -1284,15 +1410,18 @@
         const images = (data.images || []).filter(img => img.url);
         if (images.length === 0) { failed++; continue; }
         const url = images[0].url;
-        await api.updatePantryItem(item.id, {
+        const updated = await api.updatePantryItem(item.id, {
           name: item.name,
           price: item.price || 0,
           price_unit_size: item.price_unit_size || '',
           image_url: url,
         });
-        item.image_url = url;
+        const next = updated || { ...item, image_url: url };
+        const idx = items.findIndex(i => i.id === item.id);
+        if (idx >= 0) items[idx] = next;
+        const card = findCard(item.id);
+        if (card) patchCard(card, next);
         done++;
-        renderGrid(document.getElementById('search-input').value);
       } catch(_) {
         failed++;
       }
@@ -1301,7 +1430,6 @@
     btn.disabled = false;
     btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:.35rem">image_search</span>Find All Images';
     showToast(`Done: ${done} images found${failed ? `, ${failed} failed` : ''}`);
-    await loadItems();
   });
 
   // ── Init ─────────────────────────────────────────────────────────────────

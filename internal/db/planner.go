@@ -118,7 +118,8 @@ func (s *Store) GetGroceryList(planID int64) ([]models.GroceryItem, error) {
 		SELECT
 			COALESCE(p.name, i.name) AS display_name,
 			i.pantry_item_id,
-			i.amount, i.unit, r.title, e.servings
+			i.amount, i.unit, r.title, e.servings,
+			COALESCE(p.image_url, '') AS pantry_image_url
 		FROM meal_plan_entries e
 		JOIN recipes r ON r.id = e.recipe_id
 		JOIN ingredients i ON i.recipe_id = r.id
@@ -137,17 +138,18 @@ func (s *Store) GetGroceryList(planID int64) ([]models.GroceryItem, error) {
 	type agg struct {
 		displayName string
 		amount      float64
+		imageURL    string
 		recipes     map[string]struct{}
 	}
 	order := []key{}
 	groups := map[key]*agg{}
 
 	for rows.Next() {
-		var displayName, unit, recipeTitle string
+		var displayName, unit, recipeTitle, pantryImageURL string
 		var pantryItemID sql.NullInt64
 		var amount float64
 		var multiplier int
-		if err := rows.Scan(&displayName, &pantryItemID, &amount, &unit, &recipeTitle, &multiplier); err != nil {
+		if err := rows.Scan(&displayName, &pantryItemID, &amount, &unit, &recipeTitle, &multiplier, &pantryImageURL); err != nil {
 			return nil, err
 		}
 		if multiplier < 1 || multiplier > 4 {
@@ -165,11 +167,15 @@ func (s *Store) GetGroceryList(planID int64) ([]models.GroceryItem, error) {
 		if g, ok := groups[k]; ok {
 			g.amount += scaled
 			g.recipes[recipeTitle] = struct{}{}
+			if g.imageURL == "" && pantryImageURL != "" {
+				g.imageURL = pantryImageURL
+			}
 		} else {
 			order = append(order, k)
 			groups[k] = &agg{
 				displayName: displayName,
 				amount:      scaled,
+				imageURL:    pantryImageURL,
 				recipes:     map[string]struct{}{recipeTitle: {}},
 			}
 		}
@@ -186,10 +192,11 @@ func (s *Store) GetGroceryList(planID int64) ([]models.GroceryItem, error) {
 			recipeTitles = append(recipeTitles, rt)
 		}
 		items = append(items, models.GroceryItem{
-			Name:    g.displayName,
-			Amount:  g.amount,
-			Unit:    k.unit,
-			Recipes: recipeTitles,
+			Name:     g.displayName,
+			Amount:   g.amount,
+			Unit:     k.unit,
+			Recipes:  recipeTitles,
+			ImageURL: g.imageURL,
 		})
 	}
 	if items == nil {

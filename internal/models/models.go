@@ -98,6 +98,7 @@ type PantryItem struct {
 	Name          string    `json:"name"`
 	Price         float64   `json:"price"`
 	PriceUnitSize string    `json:"price_unit_size"`
+	ImageURL      string    `json:"image_url"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
@@ -105,6 +106,7 @@ type PantryItemInput struct {
 	Name          string  `json:"name"`
 	Price         float64 `json:"price"`
 	PriceUnitSize string  `json:"price_unit_size"`
+	ImageURL      string  `json:"image_url"`
 }
 
 type UnlinkedIngredient struct {
@@ -154,8 +156,9 @@ type MealPlanEntry struct {
 }
 
 type GroceryItem struct {
-	Name    string   `json:"name"`
-	Amount  float64  `json:"amount"`
-	Unit    string   `json:"unit"`
-	Recipes []string `json:"recipes"`
+	Name     string   `json:"name"`
+	Amount   float64  `json:"amount"`
+	Unit     string   `json:"unit"`
+	Recipes  []string `json:"recipes"`
+	ImageURL string   `json:"image_url"`
 }

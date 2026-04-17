@@ -294,7 +294,6 @@ function renderGrid(plan) {
   const grid = document.getElementById('planner-grid');
   if (!grid) return;
 
-  // Build a lookup: entries by day
   const entryMap = {};
   (plan.entries || []).forEach(e => {
     if (!entryMap[e.day]) entryMap[e.day] = [];
@@ -303,77 +302,72 @@ function renderGrid(plan) {
 
   let html = '';
 
-  // One row per day
   DAYS.forEach((day, i) => {
     const colDate = addDays(currentWeekStart, i);
     const entry = (entryMap[day] || [])[0] || null;
-    const todayClass = isTodayColumn(i) ? ' today-row' : '';
-    html += `<div class="grid-row${todayClass}">`;
-    html += `<div class="grid-row-label">
-      <span class="grid-row-label-day">${DAY_LABELS[i]}</span>
-      <span class="grid-row-label-date">${formatDateShort(colDate)}</span>
+    const todayClass = isTodayColumn(i) ? ' today-card' : '';
+
+    html += `<div class="day-card${todayClass}" data-day="${day}">`;
+    html += `<div class="day-card-header">
+      <span class="day-card-label">${DAY_LABELS[i]}</span>
+      <span class="day-card-date">${formatDateShort(colDate)}</span>
     </div>`;
+
     if (entry) {
-      html += `<div class="grid-cell grid-cell-filled" data-day="${day}">`;
-      html += buildChipHTML(entry);
-      html += `</div>`;
+      const mult = [1, 2, 3, 4].includes(entry.servings) ? entry.servings : 1;
+      const multBtns = [1, 2, 3, 4].map(n =>
+        `<button class="chip-mult-btn${n === mult ? ' active' : ''}" data-mult="${n}" data-entry-id="${entry.id}" data-day="${day}" data-recipe-id="${entry.recipe_id}">${n}×</button>`
+      ).join('');
+      html += `<div class="day-card-image">
+        ${entry.recipe_image
+          ? `<img src="${escHtml(entry.recipe_image)}" alt="" loading="lazy">`
+          : `<div class="day-card-image-placeholder"><span class="material-symbols-outlined">restaurant</span></div>`
+        }
+      </div>
+      <div class="day-card-recipe">
+        <div class="day-card-recipe-title">${escHtml(entry.recipe_title)}</div>
+        <div class="day-card-recipe-actions">
+          ${multBtns}
+          <button class="day-card-remove" data-entry-id="${entry.id}" title="Remove">×</button>
+        </div>
+      </div>`;
     } else {
-      html += `<div class="grid-cell grid-cell-empty" data-day="${day}">`;
-      html += `<span class="cell-empty-hint">Click to add a recipe</span>`;
-      html += `</div>`;
+      html += `<div class="day-card-empty">
+        <span class="day-card-empty-hint">+ Pick recipe</span>
+      </div>`;
     }
+
     html += `</div>`;
   });
 
   grid.innerHTML = html;
 
-  // Remove-entry listeners on filled cells
-  grid.querySelectorAll('.recipe-chip-remove').forEach(btn => {
+  grid.querySelectorAll('.day-card-remove').forEach(btn => {
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();
       removeEntry(parseInt(btn.dataset.entryId, 10));
     });
   });
 
-  // Chip multiplier buttons
   grid.querySelectorAll('.chip-mult-btn').forEach(btn => {
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      const newMult = parseInt(btn.dataset.mult, 10);
-      const entryId = parseInt(btn.dataset.entryId, 10);
-      const day = btn.dataset.day;
-      const recipeId = parseInt(btn.dataset.recipeId, 10);
-      updateEntryMultiplier(entryId, day, recipeId, newMult);
+      updateEntryMultiplier(
+        parseInt(btn.dataset.entryId, 10),
+        btn.dataset.day,
+        parseInt(btn.dataset.recipeId, 10),
+        parseInt(btn.dataset.mult, 10)
+      );
     });
   });
 
-  // Click empty cell to pick a recipe
-  grid.querySelectorAll('.grid-cell-empty').forEach(cell => {
-    cell.addEventListener('click', () => openRecipePicker(cell.dataset.day));
-  });
-
-  // Click filled cell (not the × button or mult buttons) to replace
-  grid.querySelectorAll('.grid-cell-filled').forEach(cell => {
-    cell.addEventListener('click', (ev) => {
-      if (!ev.target.closest('.recipe-chip-remove') && !ev.target.closest('.chip-mult-btn')) openRecipePicker(cell.dataset.day);
+  grid.querySelectorAll('.day-card').forEach(card => {
+    card.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.day-card-remove') && !ev.target.closest('.chip-mult-btn')) {
+        openRecipePicker(card.dataset.day);
+      }
     });
   });
-}
-
-function buildChipHTML(entry) {
-  const imgPart = entry.recipe_image
-    ? `<img class="recipe-chip-img" src="${entry.recipe_image}" alt="" loading="lazy">`
-    : `<span class="recipe-chip-img-placeholder"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>`;
-  const mult = [1, 2, 3, 4].includes(entry.servings) ? entry.servings : 1;
-  const multBtns = [1, 2, 3, 4].map(n =>
-    `<button class="chip-mult-btn${n === mult ? ' active' : ''}" data-mult="${n}" data-entry-id="${entry.id}" data-day="${entry.day}" data-recipe-id="${entry.recipe_id}">${n}×</button>`
-  ).join('');
-  return `<div class="recipe-chip">
-    ${imgPart}
-    <span class="recipe-chip-title">${escHtml(entry.recipe_title)}</span>
-    <div class="chip-mult-btns">${multBtns}</div>
-    <button class="recipe-chip-remove" data-entry-id="${entry.id}" title="Remove">×</button>
-  </div>`;
 }
 
 function escHtml(str) {
@@ -521,8 +515,12 @@ function renderGroceryList() {
           <button class="grocery-amt-btn grocery-amt-plus" data-idx="${idx}">+</button>
         </div>`
       : (amtDisplay ? `<span class="grocery-item-amount">${escHtml(amtDisplay)}</span>` : '');
+    const imgPart = item.image_url
+      ? `<img class="grocery-item-img" src="${escHtml(item.image_url)}" alt="" loading="lazy">`
+      : `<div class="grocery-item-img-placeholder"></div>`;
     return `<li class="grocery-item${inPantry ? ' in-pantry' : ''}" data-idx="${idx}">
       <button class="grocery-pantry-btn${inPantry ? ' active' : ''}" data-idx="${idx}" title="${inPantry ? 'Mark as needed' : 'Mark as in pantry'}">✓</button>
+      ${imgPart}
       <span class="grocery-item-name">${escHtml(item.name)}</span>
       ${amountControls}
       <span class="grocery-item-recipes">${escHtml(recipesStr)}</span>

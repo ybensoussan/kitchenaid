@@ -56,6 +56,7 @@ func main() {
 	mux.HandleFunc("POST /api/import/image", h.ImportImage)
 
 	mux.HandleFunc("GET /api/images/search",  h.SearchImages)
+	mux.HandleFunc("GET /img",                h.ProxyImage)
 	mux.HandleFunc("POST /api/alternatives", h.FindAlternatives)
 
 	mux.HandleFunc("GET /api/tags",               h.ListAllTags)
