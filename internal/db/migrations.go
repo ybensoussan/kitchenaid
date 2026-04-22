@@ -57,6 +57,23 @@ CREATE TABLE IF NOT EXISTS recipe_tags (
 
 INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_provider', 'anthropic');
 
+CREATE TABLE IF NOT EXISTS users (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    email          TEXT    NOT NULL UNIQUE,
+    display_name   TEXT    NOT NULL DEFAULT '',
+    password_hash  TEXT,
+    oauth_provider TEXT    NOT NULL DEFAULT '',
+    oauth_id       TEXT    NOT NULL DEFAULT '',
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    token      TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS meal_plans (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT    NOT NULL,

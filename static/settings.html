@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/editorial.css">
   <script src="/js/theme.js"></script>
+  <script src="/js/auth-nav.js" defer></script>
   <style>
     /* Settings page — editorial overrides */
     .settings-block {
@@ -250,6 +251,39 @@
       background: linear-gradient(to right, transparent, var(--border, #e0dbd4), transparent);
       margin: 2rem 0;
     }
+
+    /* Toggle switch */
+    .toggle-switch { position: relative; display: inline-block; width: 3rem; height: 1.65rem; flex-shrink: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--border, #e0dbd4);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 1.2rem; height: 1.2rem;
+      top: 0.225rem; left: 0.225rem;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+    #auth-enabled-toggle:checked + .toggle-track { background: var(--primary, #516441); }
+    #auth-enabled-toggle:checked + .toggle-track::after { transform: translateX(1.35rem); }
+
+    /* User row */
+    .user-row td { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border, #e0dbd4); }
+    .user-row:last-child td { border-bottom: none; }
+    .user-delete-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted, #7a7870); padding: 0.25rem;
+      border-radius: 0.4rem; transition: color 0.15s, background 0.15s;
+      display: flex; align-items: center;
+    }
+    .user-delete-btn:hover { color: #c0392b; background: rgba(192,57,43,0.08); }
   </style>
 </head>
 <body>
@@ -389,6 +423,144 @@
     </div>
   </div>
 
+  <div class="settings-divider"></div>
+
+  <!-- Authentication -->
+  <div class="settings-block">
+    <div class="settings-block-label">Security</div>
+    <div class="settings-block-title">Authentication</div>
+    <div class="settings-block-desc">Require users to sign in before accessing the app. Useful when running publicly. Enable OAuth providers by entering their client credentials.</div>
+
+    <!-- Enable toggle -->
+    <div class="settings-card" style="padding:1.1rem 1.25rem;margin-bottom:0.75rem;">
+      <label style="display:flex;align-items:center;gap:1rem;cursor:pointer;">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:0.2rem;">Require Login</div>
+          <div style="font-size:0.82rem;color:var(--muted);">All pages and API routes will require an authenticated session.</div>
+        </div>
+        <div class="toggle-switch">
+          <input type="checkbox" id="auth-enabled-toggle" style="position:absolute;opacity:0;width:0;height:0;">
+          <span class="toggle-track"></span>
+        </div>
+      </label>
+    </div>
+
+    <!-- OAuth providers -->
+    <div class="provider-cards">
+      <!-- Google -->
+      <div class="provider-card" style="cursor:default;display:block;padding:1.1rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          <span style="font-weight:700;font-size:0.95rem;color:var(--text);">Google</span>
+        </div>
+        <div style="display:grid;gap:0.6rem;">
+          <div>
+            <div class="provider-key-label">Client ID</div>
+            <input type="text" id="google-client-id" class="provider-key-input" placeholder="1234….apps.googleusercontent.com" autocomplete="off">
+          </div>
+          <div>
+            <div class="provider-key-label">Client Secret</div>
+            <input type="password" id="google-client-secret" class="provider-key-input" placeholder="GOCSPX-…" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- Microsoft -->
+      <div class="provider-card" style="cursor:default;display:block;padding:1.1rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F35325" d="M1 1h10v10H1z"/><path fill="#81BC06" d="M13 1h10v10H13z"/><path fill="#05A6F0" d="M1 13h10v10H1z"/><path fill="#FFBA08" d="M13 13h10v10H13z"/></svg>
+          <span style="font-weight:700;font-size:0.95rem;color:var(--text);">Microsoft</span>
+        </div>
+        <div style="display:grid;gap:0.6rem;">
+          <div>
+            <div class="provider-key-label">Client ID</div>
+            <input type="text" id="microsoft-client-id" class="provider-key-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+          </div>
+          <div>
+            <div class="provider-key-label">Client Secret</div>
+            <input type="password" id="microsoft-client-secret" class="provider-key-input" placeholder="Client secret value" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- Facebook -->
+      <div class="provider-card" style="cursor:default;display:block;padding:1.1rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971h-1.513c-1.491 0-1.956.931-1.956 1.886v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+          <span style="font-weight:700;font-size:0.95rem;color:var(--text);">Facebook</span>
+        </div>
+        <div style="display:grid;gap:0.6rem;">
+          <div>
+            <div class="provider-key-label">App ID</div>
+            <input type="text" id="facebook-client-id" class="provider-key-input" placeholder="App ID" autocomplete="off">
+          </div>
+          <div>
+            <div class="provider-key-label">App Secret</div>
+            <input type="password" id="facebook-client-secret" class="provider-key-input" placeholder="App Secret" autocomplete="off">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-divider"></div>
+
+  <!-- User Management -->
+  <div class="settings-block" id="user-management-block" style="display:none">
+    <div class="settings-block-label">Access</div>
+    <div class="settings-block-title">Users</div>
+    <div class="settings-block-desc">Accounts that can sign in. The first account registered is the owner. You can add local accounts or invite via OAuth.</div>
+
+    <div class="settings-card" style="padding:0;">
+      <div id="users-table-wrap" style="overflow:hidden;border-radius:1.25rem;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:0.75rem 1.25rem;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:700;">User</th>
+              <th style="text-align:left;padding:0.75rem 1.25rem;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:700;">Provider</th>
+              <th style="width:2rem;padding:0.75rem 1rem;"></th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="3" style="padding:1.5rem 1.25rem;color:var(--muted);text-align:center;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <button id="add-user-btn" class="backup-action-card" style="display:inline-flex;">
+        <div class="backup-action-icon">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">person_add</span>
+        </div>
+        Add Local User
+      </button>
+    </div>
+
+    <!-- Add user inline form -->
+    <div id="add-user-form" style="display:none;margin-top:1rem;" class="settings-card">
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:1rem;">New Local Account</div>
+      <div style="display:grid;gap:0.75rem;">
+        <div>
+          <div class="provider-key-label">Display Name</div>
+          <input type="text" id="new-user-name" class="provider-key-input" placeholder="Name">
+        </div>
+        <div>
+          <div class="provider-key-label">Email</div>
+          <input type="email" id="new-user-email" class="provider-key-input" placeholder="user@example.com">
+        </div>
+        <div>
+          <div class="provider-key-label">Password</div>
+          <input type="password" id="new-user-password" class="provider-key-input" placeholder="••••••••">
+        </div>
+        <div style="display:flex;gap:0.6rem;">
+          <button id="create-user-btn" class="btn btn-primary" style="border-radius:9999px;padding:0.55rem 1.25rem;font-size:0.85rem;background:linear-gradient(135deg,#516441,#869b74);border:none;color:#fff;font-weight:700;cursor:pointer;">Create</button>
+          <button onclick="document.getElementById('add-user-form').style.display='none'" style="background:none;border:none;font-size:0.85rem;color:var(--muted);cursor:pointer;padding:0.55rem 0.75rem;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Save -->
   <div class="settings-save-bar">
     <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
@@ -495,6 +667,7 @@
           opt.selected = true;
           modelSelect.appendChild(opt);
         }
+        populateAuthSettings(json.data);
       }
     } catch (err) {
       showToast('Failed to load settings', true);
@@ -532,6 +705,15 @@
             anthropic_api_key: antKey,
             gemini_api_key: gemKey,
             model,
+            auth: {
+              enabled: authToggle.checked,
+              google_client_id:        googleClientId.value.trim(),
+              google_client_secret:    googleClientSec.value.trim(),
+              microsoft_client_id:     msClientId.value.trim(),
+              microsoft_client_secret: msClientSec.value.trim(),
+              facebook_client_id:      fbClientId.value.trim(),
+              facebook_client_secret:  fbClientSec.value.trim(),
+            },
           })
         });
         const json = await res.json();
@@ -545,6 +727,113 @@
         saveBtn.textContent = 'Save Settings';
       }
     });
+
+    // ── Auth settings ──────────────────────────────────────────────────────────
+    const authToggle     = document.getElementById('auth-enabled-toggle');
+    const googleClientId = document.getElementById('google-client-id');
+    const googleClientSec= document.getElementById('google-client-secret');
+    const msClientId     = document.getElementById('microsoft-client-id');
+    const msClientSec    = document.getElementById('microsoft-client-secret');
+    const fbClientId     = document.getElementById('facebook-client-id');
+    const fbClientSec    = document.getElementById('facebook-client-secret');
+
+    // Extend save handler to include auth fields
+    const origSaveHandler = saveBtn.onclick; // we'll override the whole save click
+
+    // ── User management ────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const tbody = document.getElementById('users-tbody');
+      try {
+        const res = await fetch('/api/auth/users');
+        if (!res.ok) { tbody.innerHTML = '<tr><td colspan="3" style="padding:1.5rem 1.25rem;color:var(--muted);text-align:center;">Not available</td></tr>'; return; }
+        const json = await res.json();
+        const users = json.data || [];
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="3" style="padding:1.5rem 1.25rem;color:var(--muted);text-align:center;">No users yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        users.forEach(u => {
+          const tr = document.createElement('tr');
+          tr.className = 'user-row';
+          const provider = u.oauth_provider ? `<span style="font-size:0.78rem;background:color-mix(in srgb,var(--primary,#516441) 10%,transparent);color:var(--primary,#516441);border-radius:0.35rem;padding:0.15rem 0.5rem;font-weight:600;text-transform:capitalize;">${u.oauth_provider}</span>` : '<span style="font-size:0.78rem;color:var(--muted);">local</span>';
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight:600">${escHtml(u.display_name)}</div>
+              <div style="font-size:0.8rem;color:var(--muted)">${escHtml(u.email)}</div>
+            </td>
+            <td>${provider}</td>
+            <td>
+              <button class="user-delete-btn" data-id="${u.id}" title="Remove user">
+                <span class="material-symbols-outlined" style="font-size:1.1rem">delete</span>
+              </button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.user-delete-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Remove this user? They will lose access immediately.')) return;
+            try {
+              const r = await fetch(`/api/auth/users/${btn.dataset.id}`, { method: 'DELETE' });
+              const j = await r.json();
+              if (j.error) throw new Error(j.error);
+              loadUsers();
+            } catch (err) { showToast(err.message, true); }
+          });
+        });
+      } catch { tbody.innerHTML = '<tr><td colspan="3" style="padding:1.5rem;color:var(--muted);text-align:center;">Failed to load users</td></tr>'; }
+    }
+
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    authToggle.addEventListener('change', () => {
+      const block = document.getElementById('user-management-block');
+      block.style.display = authToggle.checked ? '' : 'none';
+      if (authToggle.checked) loadUsers();
+    });
+
+    document.getElementById('add-user-btn').addEventListener('click', () => {
+      document.getElementById('add-user-form').style.display = '';
+    });
+
+    document.getElementById('create-user-btn').addEventListener('click', async () => {
+      const name  = document.getElementById('new-user-name').value.trim();
+      const email = document.getElementById('new-user-email').value.trim();
+      const pass  = document.getElementById('new-user-password').value;
+      if (!email || !pass) { showToast('Email and password required', true); return; }
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, display_name: name, password: pass })
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        showToast('User created');
+        document.getElementById('add-user-form').style.display = 'none';
+        document.getElementById('new-user-name').value = '';
+        document.getElementById('new-user-email').value = '';
+        document.getElementById('new-user-password').value = '';
+        loadUsers();
+      } catch (err) { showToast(err.message, true); }
+    });
+
+    // Populate auth fields from loaded settings
+    function populateAuthSettings(data) {
+      if (!data.auth) return;
+      const a = data.auth;
+      authToggle.checked = !!a.enabled;
+      if (a.enabled) {
+        document.getElementById('user-management-block').style.display = '';
+        loadUsers();
+      }
+      if (a.google_client_id)        googleClientId.value  = a.google_client_id;
+      if (a.google_client_secret)    googleClientSec.value = a.google_client_secret;
+      if (a.microsoft_client_id)     msClientId.value      = a.microsoft_client_id;
+      if (a.microsoft_client_secret) msClientSec.value     = a.microsoft_client_secret;
+      if (a.facebook_client_id)      fbClientId.value      = a.facebook_client_id;
+      if (a.facebook_client_secret)  fbClientSec.value     = a.facebook_client_secret;
+    }
 
     // Handle DB Import
     const importBtn = document.getElementById('import-db-btn');

@@ -123,10 +123,56 @@ type UploadResponse struct {
 }
 
 type Settings struct {
-	AIProvider       string `json:"ai_provider"` // "anthropic" or "gemini"
-	AnthropicAPIKey  string `json:"anthropic_api_key"`
-	GeminiAPIKey     string `json:"gemini_api_key"`
-	Model            string `json:"model"`
+	AIProvider      string       `json:"ai_provider"` // "anthropic" or "gemini"
+	AnthropicAPIKey string       `json:"anthropic_api_key"`
+	GeminiAPIKey    string       `json:"gemini_api_key"`
+	Model           string       `json:"model"`
+	Auth            AuthSettings `json:"auth"`
+}
+
+type AuthSettings struct {
+	Enabled               bool   `json:"enabled"`
+	GoogleClientID        string `json:"google_client_id"`
+	GoogleClientSecret    string `json:"google_client_secret"`
+	MicrosoftClientID     string `json:"microsoft_client_id"`
+	MicrosoftClientSecret string `json:"microsoft_client_secret"`
+	FacebookClientID      string `json:"facebook_client_id"`
+	FacebookClientSecret  string `json:"facebook_client_secret"`
+}
+
+type AuthConfig struct {
+	Enabled   bool     `json:"enabled"`
+	Providers []string `json:"providers"`
+	HasUsers  bool     `json:"has_users"`
+}
+
+type User struct {
+	ID            int64     `json:"id"`
+	Email         string    `json:"email"`
+	DisplayName   string    `json:"display_name"`
+	PasswordHash  *string   `json:"-"`
+	OAuthProvider string    `json:"oauth_provider,omitempty"`
+	OAuthID       string    `json:"-"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type Session struct {
+	Token     string    `json:"-"`
+	UserID    int64     `json:"user_id"`
+	UserEmail string    `json:"email"`
+	UserName  string    `json:"display_name"`
+	ExpiresAt time.Time `json:"-"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type RegisterRequest struct {
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+	Password    string `json:"password"`
 }
 
 type APIResponse struct {
