@@ -21,7 +21,7 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if settings.AIProvider != "anthropic" && settings.AIProvider != "gemini" {
-		h.writeError(w, http.StatusBadRequest, "invalid provider")
+		h.writeError(w, http.StatusBadRequest, "invalid ai_provider")
 		return
 	}
 	if err := h.Store.UpdateSettings(settings); err != nil {

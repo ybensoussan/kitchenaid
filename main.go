@@ -30,6 +30,18 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	// Auth routes (public)
+	mux.HandleFunc("GET /api/auth/config", h.GetAuthConfig)
+	mux.HandleFunc("POST /api/auth/register", h.Register)
+	mux.HandleFunc("POST /api/auth/login", h.Login)
+	mux.HandleFunc("POST /api/auth/logout", h.Logout)
+	mux.HandleFunc("GET /api/auth/me", h.Me)
+	mux.HandleFunc("GET /api/auth/oauth/start", h.OAuthStart)
+	mux.HandleFunc("GET /api/auth/oauth/callback", h.OAuthCallback)
+	// User management (requires auth via middleware)
+	mux.HandleFunc("GET /api/auth/users", h.ListUsers)
+	mux.HandleFunc("DELETE /api/auth/users/{id}", h.DeleteAuthUser)
+
 	// API routes
 	mux.HandleFunc("GET /api/recipes", h.ListRecipes)
 	mux.HandleFunc("POST /api/recipes", h.CreateRecipe)
@@ -99,7 +111,7 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	log.Printf("KitchenAid listening on http://localhost:%s", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
+	if err := http.ListenAndServe(":"+cfg.Port, handlers.AuthMiddleware(store, mux)); err != nil {
 		log.Fatal(err)
 	}
 }

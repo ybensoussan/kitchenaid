@@ -572,6 +572,20 @@ func (s *Store) GetSettings() (models.Settings, error) {
 			settings.GeminiAPIKey = v
 		case "model":
 			settings.Model = v
+		case "auth_enabled":
+			settings.Auth.Enabled = v == "true"
+		case "auth_google_client_id":
+			settings.Auth.GoogleClientID = v
+		case "auth_google_client_secret":
+			settings.Auth.GoogleClientSecret = v
+		case "auth_microsoft_client_id":
+			settings.Auth.MicrosoftClientID = v
+		case "auth_microsoft_client_secret":
+			settings.Auth.MicrosoftClientSecret = v
+		case "auth_facebook_client_id":
+			settings.Auth.FacebookClientID = v
+		case "auth_facebook_client_secret":
+			settings.Auth.FacebookClientSecret = v
 		}
 	}
 	return settings, nil
@@ -595,6 +609,31 @@ func (s *Store) UpdateSettings(settings models.Settings) error {
 		return err
 	}
 	if _, err := tx.Exec(upsert, "model", settings.Model); err != nil {
+		return err
+	}
+	authEnabled := "false"
+	if settings.Auth.Enabled {
+		authEnabled = "true"
+	}
+	if _, err := tx.Exec(upsert, "auth_enabled", authEnabled); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_google_client_id", settings.Auth.GoogleClientID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_google_client_secret", settings.Auth.GoogleClientSecret); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_microsoft_client_id", settings.Auth.MicrosoftClientID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_microsoft_client_secret", settings.Auth.MicrosoftClientSecret); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_facebook_client_id", settings.Auth.FacebookClientID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(upsert, "auth_facebook_client_secret", settings.Auth.FacebookClientSecret); err != nil {
 		return err
 	}
 	return tx.Commit()
