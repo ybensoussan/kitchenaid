@@ -1088,115 +1088,240 @@
   // ── Cooking mode ──────────────────────────────────────────────────────────
 
   const cookingMode = (() => {
-    const overlay   = document.getElementById('cooking-mode');
-    const cookTitle = document.getElementById('cook-title');
-    const ingList   = document.getElementById('cook-ingredient-list');
-    const stepsList = document.getElementById('cook-steps-list');
-    const timersList = document.getElementById('cook-timers-list');
-    const wakeDot   = document.getElementById('cook-wake-dot');
-    let wakeLock    = null;
-    let timers      = []; // { id, label, seconds, initial, running }
+    const overlay      = document.getElementById('cooking-mode');
+    const cookTitle    = document.getElementById('cook-title');
+    const ingList      = document.getElementById('cook-ingredient-list');
+    const stepsList    = document.getElementById('cook-steps-list');
+    const timersList   = document.getElementById('cook-timers-list');
+    const timerBar     = document.getElementById('cook-timer-bar');
+    const wakeDot      = document.getElementById('cook-wake-dot');
+    const counterEl    = document.getElementById('cook-step-counter');
+    const doneBtn      = document.getElementById('cook-done-btn');
+    const doneLabel    = document.getElementById('cook-done-label');
+    const prevBtn      = document.getElementById('cook-prev-btn');
+    const nextBtn      = document.getElementById('cook-next-btn');
+    const ingCountEl   = document.getElementById('cook-ing-count');
+    const timerCountEl = document.getElementById('cook-timers-count');
+    const ingToggle    = document.getElementById('cook-ing-toggle');
+    const timersToggle = document.getElementById('cook-timers-toggle');
+    const ingPanel     = document.getElementById('cook-ingredients-panel');
+    const timersPanel  = document.getElementById('cook-timers-panel');
+    const backdrop     = document.getElementById('cook-sheet-backdrop');
 
-    function addTimer(initialSeconds = 300, label = 'Timer') {
-      const id = Date.now() + Math.random();
-      timers.push({ id, label, seconds: initialSeconds, initial: initialSeconds, running: false, started: false });
-      renderTimers();
+    // Below this width the overlay is a step-at-a-time pager rather than
+    // three side-by-side panels. Kept in sync with css/mobile.css.
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const isMobile    = () => mobileQuery.matches;
+
+    let wakeLock  = null;
+    let timers    = [];   // { id, label, seconds, initial, running, started }
+    let nextId    = 1;
+    let current   = 0;    // step index currently in view
+    let editingId = null; // timer being duration-edited
+    let ticker    = null;
+
+    // ── Alert ──
+    // Synthesised rather than fetched: the old remote mp3 needed the network
+    // mid-cook and was blocked by autoplay policy until first interaction.
+    let audioCtx = null;
+    function alertUser() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) {
+          audioCtx = audioCtx || new Ctx();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          const t0 = audioCtx.currentTime;
+          [0, 0.3, 0.6].forEach(offset => {
+            const osc  = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, t0 + offset);
+            gain.gain.setValueAtTime(0.0001, t0 + offset);
+            gain.gain.exponentialRampToValueAtTime(0.3, t0 + offset + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + offset + 0.24);
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start(t0 + offset);
+            osc.stop(t0 + offset + 0.26);
+          });
+        }
+      } catch (_) {}
+      try { navigator.vibrate?.([200, 100, 200]); } catch (_) {}
     }
+
+    // ── Timers ────────────────────────────────────────────────────────────
+
+    function fmtTime(total) {
+      const neg = total < 0;
+      const s   = Math.abs(total);
+      return `${neg ? '-' : ''}${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    function addTimer(seconds = 300, label = null) {
+      const id = nextId++;
+      timers.push({
+        id,
+        label: label || `Timer ${timers.length + 1}`,
+        seconds, initial: seconds, running: false, started: false,
+      });
+      renderTimers();
+      return id;
+    }
+
+    function findTimer(id) { return timers.find(t => t.id === id); }
+    function isDone(t)     { return t.started && t.seconds <= 0; }
 
     function renderTimers() {
       if (timers.length === 0) {
-        timersList.innerHTML = `<p style="font-size:0.8rem;color:var(--muted);text-align:center;padding:1rem">No active timers.</p>`;
-        return;
+        timersList.innerHTML = `<p class="cook-timers-empty">No active timers.</p>`;
+      } else {
+        timersList.innerHTML = timers.map(t => {
+          const done    = isDone(t);
+          const editing = editingId === t.id;
+          return `
+            <div class="cook-timer-card${done ? ' done' : ''}${t.running ? ' running' : ''}" data-id="${t.id}">
+              <div class="timer-top">
+                <input type="text" class="timer-label" value="${escHtml(t.label)}" placeholder="Label">
+                <button class="timer-del-btn" aria-label="Delete timer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+              ${editing ? `
+                <div class="timer-edit">
+                  <input type="number" class="timer-mm" inputmode="numeric" min="0" max="599" value="${Math.floor(Math.max(0, t.seconds) / 60)}" aria-label="Minutes">
+                  <span class="timer-edit-sep">:</span>
+                  <input type="number" class="timer-ss" inputmode="numeric" min="0" max="59" value="${Math.max(0, t.seconds) % 60}" aria-label="Seconds">
+                  <button class="timer-save-btn btn btn-primary btn-sm">Set</button>
+                </div>` : `
+                <button class="timer-display" ${t.running ? 'disabled' : ''} title="Tap to set duration">${fmtTime(t.seconds)}</button>`}
+              <div class="timer-controls">
+                ${done ? '' : `<button class="timer-toggle-btn btn btn-secondary btn-sm">${t.running ? 'Pause' : 'Start'}</button>`}
+                <button class="timer-reset-btn btn btn-secondary btn-sm">Reset</button>
+              </div>
+            </div>`;
+        }).join('');
+        wireTimerCards();
       }
+      renderTimerBar();
+      if (timerCountEl) timerCountEl.textContent = timers.length || '';
+    }
 
-      timersList.innerHTML = timers.map(t => {
-        const mm = Math.floor(t.seconds / 60);
-        const ss = t.seconds % 60;
-        const timeStr = `${mm}:${ss.toString().padStart(2, '0')}`;
-        const isDone = t.started && t.seconds <= 0;
-
-        return `
-          <div class="cook-timer-card${isDone ? ' done' : ''}${t.running ? ' running' : ''}" data-id="${t.id}">
-            <div class="timer-top">
-              <input type="text" class="timer-label" value="${escHtml(t.label)}" placeholder="Label">
-              <button class="timer-del-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-            <div class="timer-display">${timeStr}</div>
-            <div class="timer-controls">
-              ${!isDone ? `
-                <button class="timer-toggle-btn btn btn-secondary btn-sm">
-                  ${t.running ? 'Pause' : 'Start'}
-                </button>
-              ` : ''}
-              <button class="timer-reset-btn btn btn-secondary btn-sm">Reset</button>
-            </div>
-          </div>`;
-      }).join('');
-
-      // Wire up timer events
+    function wireTimerCards() {
       timersList.querySelectorAll('.cook-timer-card').forEach(el => {
-        const id = parseFloat(el.dataset.id);
-        const timer = timers.find(t => t.id === id);
+        const id = parseInt(el.dataset.id, 10);
+        const t  = findTimer(id);
+        if (!t) return;
 
         el.querySelector('.timer-label').addEventListener('change', e => {
-          timer.label = e.target.value;
+          t.label = e.target.value;
+          renderTimerBar();
         });
 
         el.querySelector('.timer-del-btn').addEventListener('click', () => {
-          timers = timers.filter(t => t.id !== id);
+          timers = timers.filter(x => x.id !== id);
+          if (editingId === id) editingId = null;
           renderTimers();
         });
 
         el.querySelector('.timer-toggle-btn')?.addEventListener('click', () => {
-          timer.running = !timer.running;
-          if (timer.running) timer.started = true;
+          t.running = !t.running;
+          if (t.running) { t.started = true; editingId = null; }
           renderTimers();
         });
 
         el.querySelector('.timer-reset-btn').addEventListener('click', () => {
-          timer.seconds = timer.initial;
-          timer.running = false;
-          timer.started = false;
+          t.seconds = t.initial;
+          t.running = false;
+          t.started = false;
           renderTimers();
         });
 
-        el.querySelector('.timer-display').addEventListener('click', () => {
-          if (timer.running) return;
-          const newMinutes = prompt('Enter minutes:', Math.floor(timer.seconds / 60));
-          if (newMinutes !== null) {
-            const mins = parseInt(newMinutes, 10) || 0;
-            timer.seconds = mins * 60;
-            timer.initial = timer.seconds;
-            renderTimers();
-          }
+        // Duration editing: inline mm/ss fields, not a native prompt()
+        el.querySelector('.timer-display')?.addEventListener('click', () => {
+          if (t.running) return;
+          editingId = id;
+          renderTimers();
+          timersList.querySelector(`.cook-timer-card[data-id="${id}"] .timer-mm`)?.select();
+        });
+
+        const commit = () => {
+          const mm = parseInt(el.querySelector('.timer-mm')?.value, 10) || 0;
+          const ss = parseInt(el.querySelector('.timer-ss')?.value, 10) || 0;
+          t.seconds = Math.max(0, mm * 60 + Math.min(59, ss));
+          t.initial = t.seconds;
+          t.started = false;
+          editingId = null;
+          renderTimers();
+        };
+        el.querySelector('.timer-save-btn')?.addEventListener('click', commit);
+        el.querySelectorAll('.timer-mm, .timer-ss').forEach(inp => {
+          inp.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); });
         });
       });
     }
 
-    // Run every second
-    setInterval(() => {
-      let changed = false;
+    // Mobile: a compact always-visible row so timers stay reachable from any step
+    function renderTimerBar() {
+      if (!timerBar) return;
+      if (timers.length === 0) {
+        timerBar.hidden = true;
+        timerBar.innerHTML = '';
+        return;
+      }
+      timerBar.hidden = false;
+      timerBar.innerHTML = timers.map(t => `
+        <button class="cook-timer-pill${t.running ? ' running' : ''}${isDone(t) ? ' done' : ''}" data-id="${t.id}">
+          <span class="material-symbols-outlined">timer</span>
+          <span class="pill-label">${escHtml(t.label)}</span>
+          <span class="pill-time" data-time-for="${t.id}">${fmtTime(t.seconds)}</span>
+        </button>`).join('') +
+        `<button class="cook-timer-pill add" id="cook-timer-pill-add" aria-label="Add timer">
+           <span class="material-symbols-outlined">add</span>
+         </button>`;
+
+      timerBar.querySelectorAll('.cook-timer-pill[data-id]').forEach(el => {
+        el.addEventListener('click', () => openSheet('timers'));
+      });
+      timerBar.querySelector('#cook-timer-pill-add')?.addEventListener('click', () => {
+        addTimer(300);
+        openSheet('timers');
+      });
+    }
+
+    // Per-second update. Only re-renders the DOM when a timer finishes —
+    // otherwise it patches the text, so the label input keeps focus.
+    function tick() {
+      let finished = false;
       timers.forEach(t => {
         if (t.running && t.seconds > 0) {
           t.seconds--;
-          changed = true;
-          if (t.seconds === 0) {
-            t.running = false;
-            try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(_) {}
-          }
+          if (t.seconds === 0) { t.running = false; finished = true; }
         }
       });
-      if (changed) renderTimers();
-    }, 1000);
+      if (finished) {
+        alertUser();
+        renderTimers();
+        return;
+      }
+      timers.forEach(t => {
+        const disp = timersList.querySelector(`.cook-timer-card[data-id="${t.id}"] .timer-display`);
+        if (disp) disp.textContent = fmtTime(t.seconds);
+        const pill = timerBar?.querySelector(`[data-time-for="${t.id}"]`);
+        if (pill) pill.textContent = fmtTime(t.seconds);
+      });
+    }
+
+    // ── Ingredients ───────────────────────────────────────────────────────
 
     function populateIngredients() {
-      const ings = recipe.ingredients || [];
+      const ings   = recipe.ingredients || [];
+      const wasSet = new Set(
+        [...ingList.querySelectorAll('.cook-ingredient-item.checked')].map(el => el.dataset.idx));
+
       ingList.innerHTML = ings.map((ing, i) => {
         const scaled = scaling.getScaledAmount(ing.amount);
         const fmt    = units.formatAmount(scaled, ing.unit);
+        const on     = wasSet.has(String(i));
         return `
-          <li class="cook-ingredient-item" data-idx="${i}">
-            <div class="cook-check-box"></div>
+          <li class="cook-ingredient-item${on ? ' checked' : ''}" data-idx="${i}">
+            <div class="cook-check-box">${on ? '✓' : ''}</div>
             <div>
               <span class="cook-ingredient-amount">${escHtml(fmt)}</span>
               <span> ${escHtml(ing.name)}</span>
@@ -1212,14 +1337,23 @@
             el.classList.contains('checked') ? '✓' : '';
         });
       });
+
+      if (ingCountEl) ingCountEl.textContent = ings.length || '';
     }
 
+    // ── Steps ─────────────────────────────────────────────────────────────
+
+    function stepEls() { return [...stepsList.querySelectorAll('.cook-step-item')]; }
+
     function populateSteps() {
-      const steps = recipe.steps || [];
+      const steps  = recipe.steps || [];
+      const wasSet = new Set(
+        [...stepsList.querySelectorAll('.cook-step-item.checked')].map(el => el.dataset.idx));
+
       stepsList.innerHTML = steps.map((step, i) => {
         const text = units.convertStepText(step.instruction);
         return `
-          <li class="cook-step-item${i === 0 ? ' current' : ''}" data-idx="${i}">
+          <li class="cook-step-item${wasSet.has(String(i)) ? ' checked' : ''}" data-idx="${i}">
             <div class="cook-step-num">${step.step_number}</div>
             <p class="cook-step-text">${escHtml(text)}</p>
             <div class="cook-step-tick">✓</div>
@@ -1228,25 +1362,131 @@
 
       stepsList.querySelectorAll('.cook-step-item').forEach(el => {
         el.addEventListener('click', () => {
+          // On touch the pager owns taps and swipes; the explicit Mark done
+          // button avoids toggling a step by accident mid-swipe.
+          if (isMobile()) return;
           el.classList.toggle('checked');
-          el.classList.remove('current');
           advanceCurrentStep();
         });
       });
+
+      updateStepUI();
     }
 
+    // Desktop: highlight the first unchecked step and scroll it into view.
     function advanceCurrentStep() {
-      const items = [...stepsList.querySelectorAll('.cook-step-item')];
+      if (isMobile()) { updateStepUI(); return; }
       let found = false;
-      items.forEach(el => {
+      stepEls().forEach((el, i) => {
         el.classList.remove('current');
         if (!found && !el.classList.contains('checked')) {
           el.classList.add('current');
+          current = i;
           found = true;
           el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
+      updateStepUI();
     }
+
+    function goToStep(idx, smooth = true) {
+      const items = stepEls();
+      if (!items.length) return;
+      current = Math.max(0, Math.min(items.length - 1, idx));
+      items[current].scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto',
+        block: 'nearest',
+        inline: 'center',
+      });
+      updateStepUI();
+    }
+
+    function updateStepUI() {
+      const items = stepEls();
+      if (!items.length) return;
+      if (current > items.length - 1) current = items.length - 1;
+
+      items.forEach((el, i) => el.classList.toggle('current', i === current));
+
+      const checked = items[current]?.classList.contains('checked');
+      if (counterEl)  counterEl.textContent = `Step ${current + 1} of ${items.length}`;
+      if (doneLabel)  doneLabel.textContent = checked ? 'Done' : 'Mark done';
+      doneBtn?.classList.toggle('is-done', !!checked);
+      if (prevBtn) prevBtn.disabled = current === 0;
+      if (nextBtn) nextBtn.disabled = current === items.length - 1;
+    }
+
+    // Keep the counter in sync with swipe-driven scrolling.
+    let scrollRaf = null;
+    stepsList.addEventListener('scroll', () => {
+      if (!isMobile() || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null;
+        const items = stepEls();
+        if (!items.length) return;
+        const mid = stepsList.scrollLeft + stepsList.clientWidth / 2;
+        let best = 0, bestDist = Infinity;
+        items.forEach((el, i) => {
+          const dist = Math.abs(el.offsetLeft + el.offsetWidth / 2 - mid);
+          if (dist < bestDist) { bestDist = dist; best = i; }
+        });
+        if (best !== current) { current = best; updateStepUI(); }
+      });
+    }, { passive: true });
+
+    doneBtn?.addEventListener('click', () => {
+      const items = stepEls();
+      const el = items[current];
+      if (!el) return;
+      const wasChecked = el.classList.contains('checked');
+      el.classList.toggle('checked');
+      if (!wasChecked && current < items.length - 1) goToStep(current + 1);
+      else updateStepUI();
+    });
+    prevBtn?.addEventListener('click', () => goToStep(current - 1));
+    nextBtn?.addEventListener('click', () => goToStep(current + 1));
+
+    // ── Bottom sheets (mobile) ────────────────────────────────────────────
+
+    function sheetOpen() {
+      return ingPanel?.classList.contains('open') || timersPanel?.classList.contains('open');
+    }
+
+    function openSheet(which) {
+      if (!isMobile()) return;
+      const target = which === 'ingredients' ? ingPanel : timersPanel;
+      const other  = which === 'ingredients' ? timersPanel : ingPanel;
+      other?.classList.remove('open');
+      target?.classList.add('open');
+      backdrop?.classList.add('open');
+      overlay.classList.add('sheet-open');
+      syncSheetState();
+    }
+
+    function closeSheets() {
+      ingPanel?.classList.remove('open');
+      timersPanel?.classList.remove('open');
+      backdrop?.classList.remove('open');
+      overlay.classList.remove('sheet-open');
+      syncSheetState();
+    }
+
+    function syncSheetState() {
+      const ingOpen = !!ingPanel?.classList.contains('open');
+      const timOpen = !!timersPanel?.classList.contains('open');
+      ingToggle?.setAttribute('aria-expanded', String(ingOpen));
+      timersToggle?.setAttribute('aria-expanded', String(timOpen));
+      ingToggle?.classList.toggle('active', ingOpen);
+      timersToggle?.classList.toggle('active', timOpen);
+    }
+
+    ingToggle?.addEventListener('click', () =>
+      ingPanel?.classList.contains('open') ? closeSheets() : openSheet('ingredients'));
+    timersToggle?.addEventListener('click', () =>
+      timersPanel?.classList.contains('open') ? closeSheets() : openSheet('timers'));
+    backdrop?.addEventListener('click', closeSheets);
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────
 
     function syncUnitBtns() {
       overlay.querySelectorAll('.cook-unit-btn').forEach(b =>
@@ -1255,14 +1495,21 @@
 
     async function enter() {
       cookTitle.textContent = recipe.title;
+      current = 0;
       populateIngredients();
       populateSteps();
       syncUnitBtns();
-      if (timers.length === 0) addTimer(300, 'Timer 1');
+      if (timers.length === 0) addTimer(300);
       renderTimers();
+      closeSheets();
+
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+
+      goToStep(0, false);
+      if (!ticker) ticker = setInterval(tick, 1000);
+
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
@@ -1273,39 +1520,55 @@
     }
 
     function exit() {
+      closeSheets();
       overlay.classList.remove('active');
       overlay.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      clearInterval(ticker);
+      ticker = null;
       wakeLock?.release().catch(() => {});
       wakeLock = null;
       wakeDot.classList.remove('on');
       document.removeEventListener('visibilitychange', reacquireWakeLock);
     }
 
+    // Phones lock and unlock constantly mid-cook; the lock must come back.
     async function reacquireWakeLock() {
-      if (wakeLock === null && document.visibilityState === 'visible') {
-        try {
-          wakeLock = await navigator.wakeLock.request('screen');
-          wakeDot.classList.add('on');
-        } catch (_) {}
-      }
+      if (document.visibilityState !== 'visible') return;
+      if (!overlay.classList.contains('active')) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeDot.classList.add('on');
+      } catch (_) {}
     }
 
-    // Units toggle inside cook mode
+    // Both unit toggles (header on desktop, ingredient sheet on mobile)
     overlay.querySelectorAll('.cook-unit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         units.setSystem(btn.dataset.system);
         syncUnitBtns();
         populateIngredients();
         populateSteps();
-        // Re-apply checked state is lost on re-render — that's acceptable
+        goToStep(current, false);
       });
     });
 
-    document.getElementById('add-timer-btn')?.addEventListener('click', () => addTimer(300, `Timer ${timers.length + 1}`));
+    document.getElementById('add-timer-btn')?.addEventListener('click', () => addTimer(300));
     document.getElementById('cook-exit-btn')?.addEventListener('click', exit);
+
+    // Re-lay-out when crossing the breakpoint (rotation, desktop resize)
+    mobileQuery.addEventListener('change', () => {
+      if (!overlay.classList.contains('active')) return;
+      closeSheets();
+      goToStep(current, false);
+    });
+
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && overlay.classList.contains('active')) exit();
+      if (!overlay.classList.contains('active')) return;
+      if (e.key === 'Escape')      { sheetOpen() ? closeSheets() : exit(); }
+      if (!isMobile()) return;
+      if (e.key === 'ArrowRight')  goToStep(current + 1);
+      if (e.key === 'ArrowLeft')   goToStep(current - 1);
     });
 
     return { enter };

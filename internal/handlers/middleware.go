@@ -55,8 +55,12 @@ func isAuthPublicPath(path string) bool {
 	if strings.HasPrefix(path, "/api/auth/oauth/") {
 		return true
 	}
+	// PWA install assets — fetched by the browser without session cookies
+	if path == "/manifest.json" {
+		return true
+	}
 	// Static assets needed by the login page
-	for _, prefix := range []string{"/css/", "/js/", "/login.html", "/uploads/"} {
+	for _, prefix := range []string{"/css/", "/js/", "/icons/", "/login.html", "/uploads/"} {
 		if strings.HasPrefix(path, prefix) {
 			return true
 		}

@@ -1,2 +1,7 @@
 data/
-*,db
+
+# SQLite database + its write-ahead log / shared-memory sidecars.
+# (Was "*,db" — a comma typo, so kitchenaid.db was tracked by accident.)
+*.db
+*.db-wal
+*.db-shm

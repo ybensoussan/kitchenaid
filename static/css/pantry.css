@@ -1,0 +1,87 @@
+/* Pantry page styles — extracted from pantry.html */
+
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius)*1.5);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.add-form .form-group { margin: 0; flex: 1; }
+
+/* AH picker modal body */
+.ah-product-list { display: flex; flex-direction: column; gap: 0; max-height: 420px; overflow-y: auto; }
+.ah-product-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 1rem; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.ah-product-item:last-child { border-bottom: none; }
+.ah-product-item:hover { background: var(--hover-bg); }
+.ah-product-thumb { width: 56px; height: 56px; object-fit: contain; border-radius: 4px; flex-shrink: 0; background: #f5f5f5; }
+.ah-product-thumb-placeholder { width: 56px; height: 56px; flex-shrink: 0; background: var(--hover-bg); border-radius: 4px; }
+.ah-product-info { flex: 1; min-width: 0; }
+.ah-product-title { font-size: 0.9rem; font-weight: 500; }
+.ah-product-size { font-size: 0.78rem; color: var(--muted); }
+.ah-product-price { font-size: 0.9rem; font-weight: 600; color: var(--brand); white-space: nowrap; }
+.ah-picker-loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
+.empty-state { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
+.btn-icon { padding: 0.2rem 0.4rem; font-size: 0.85rem; }
+.pantry-filter-btn {
+  font-size: .78rem; padding: .2rem .65rem; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+}
+.pantry-filter-btn:hover { background: var(--hover-bg); color: var(--text); }
+.pantry-filter-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.sm-section-title { font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:.5rem 0 .25rem;margin-top:.25rem }
+.sm-row { border-bottom:1px solid var(--border);padding:.6rem 0 }
+.sm-row:last-child { border-bottom:none }
+.sm-ingredient-label { font-size:.9rem;font-weight:500 }
+.sm-recipe-label { font-size:.78rem;color:var(--muted) }
+.sm-options { margin-top:.35rem;display:flex;flex-direction:column;gap:.25rem;padding-left:1.4rem }
+.sm-option { display:flex;align-items:center;gap:.45rem;font-size:.85rem }
+.sm-option input[type=radio] { flex-shrink:0 }
+.conf-badge { font-size:.68rem;padding:.1rem .35rem;border-radius:999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em }
+.conf-high   { background:#dcfce7;color:#166534 }
+.conf-medium { background:#fef9c3;color:#854d0e }
+.conf-low    { background:#fee2e2;color:#991b1b }
+.sm-search-box { margin-top:.35rem;padding-left:1.4rem }
+.sm-search-results { list-style:none;padding:0;margin:.25rem 0 0;border:1px solid var(--border);border-radius:var(--radius);max-height:140px;overflow-y:auto }
+.sm-search-result { padding:.3rem .6rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border) }
+.sm-search-result:last-child { border-bottom:none }
+.sm-search-result:hover { background:var(--hover-bg) }
+.sm-dup-names { display:flex;align-items:center;gap:.5rem;font-size:.88rem;margin-bottom:.3rem }
+.sm-dup-keep { display:flex;gap:.75rem;font-size:.84rem;padding-left:1.4rem }
+
+/* Grid layout */
+.pantry-page-content { padding: 1.5rem 2rem; }
+.pantry-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:1.25rem; }
+.pantry-header h1 { font-family:var(--font-headline); font-size:1.6rem; font-weight:700; }
+.pantry-toolbar { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+.pantry-item-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:1rem; }
+.pantry-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:.75rem;
+  overflow:hidden; transition:box-shadow .15s;
+  content-visibility:auto; contain-intrinsic-size:200px 220px;
+}
+.pantry-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.pantry-card-image { position:relative; aspect-ratio:1; background:var(--surface-low); overflow:hidden; }
+.pantry-card-image img { width:100%; height:100%; object-fit:cover; }
+.pantry-card-img-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--outline); opacity:.35; }
+.pantry-card-img-placeholder .material-symbols-outlined { font-size:2rem; }
+.pantry-img-btn { position:absolute; bottom:.35rem; right:.35rem; background:rgba(255,255,255,.9); border:none; border-radius:50%; width:1.5rem; height:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity .15s; z-index:1; }
+.pantry-img-btn .material-symbols-outlined { font-size:.8rem; }
+.pantry-card:hover .pantry-img-btn { opacity:1; }
+.pantry-card-body { padding:.6rem .7rem; }
+.pantry-card-name { font-size:.82rem; font-weight:600; line-height:1.2; margin-bottom:.2rem; cursor:pointer; }
+.pantry-card-name:hover { text-decoration:underline; }
+.pantry-card-price { font-size:.72rem; color:var(--muted); margin-bottom:.35rem; }
+.pantry-card-actions { display:flex; gap:.15rem; }
+.pantry-card-edit { padding:.6rem .7rem; }
+.pantry-card.editing .pantry-item-view { display:none; }
+.pantry-card.editing .pantry-item-edit { display:block !important; }

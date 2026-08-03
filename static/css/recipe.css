@@ -946,6 +946,10 @@ body.edit-mode .ingredients-add-row { display: flex; }
 .timer-del-btn:hover { color: #dc2626; }
 
 .timer-display {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
   font-family: monospace;
   font-size: 2.25rem;
   font-weight: 700;
@@ -954,6 +958,7 @@ body.edit-mode .ingredients-add-row { display: flex; }
   cursor: pointer;
   color: var(--text);
 }
+.timer-display:disabled { cursor: default; }
 .timer-controls {
   display: flex;
   gap: 0.5rem;
@@ -962,11 +967,58 @@ body.edit-mode .ingredients-add-row { display: flex; }
   flex: 1;
 }
 
-@media (max-width: 1024px) {
+/* Inline duration editor — replaces the native prompt() */
+.timer-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0 1rem;
+}
+.timer-edit input {
+  width: 3.5rem;
+  padding: 0.4rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--surface);
+  color: var(--text);
+  font-family: monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.timer-edit input::-webkit-outer-spin-button,
+.timer-edit input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.timer-edit-sep { font-family: monospace; font-size: 1.35rem; font-weight: 700; }
+
+.cook-timers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.cook-timers-empty {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Mobile-only chrome — shown by css/mobile.css below the breakpoint */
+.cook-timer-bar,
+.cook-mobile-bar,
+.cook-sheet-backdrop,
+.cook-step-counter,
+.cook-units-toggle-sheet { display: none; }
+
+/* Below 769px the overlay is a step pager — see css/mobile.css. These
+   only narrow the three-panel layout for small desktops and tablets. */
+@media (min-width: 769px) and (max-width: 1024px) {
   .cook-body { grid-template-columns: 240px 1fr 240px; }
 }
 
-@media (max-width: 850px) {
+@media (min-width: 769px) and (max-width: 850px) {
   .cook-body { grid-template-columns: 200px 1fr; grid-template-rows: 1fr 200px; }
   .cook-timers-panel {
     grid-column: 1 / span 2;
@@ -981,23 +1033,6 @@ body.edit-mode .ingredients-add-row { display: flex; }
     padding-bottom: 0.5rem;
   }
   .cook-timer-card { min-width: 200px; }
-}
-
-@media (max-width: 640px) {
-  .cook-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    overflow-y: auto;
-  }
-  .cook-ingredients-panel {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    max-height: none;
-    overflow-y: visible;
-    padding: 0.75rem 1rem;
-  }
-  .cook-steps-panel { padding: 1rem; overflow-y: visible; }
-  .cook-timers-panel { max-height: none; overflow-y: visible; }
 }
 
 /* ── Recipe cost row ── */
