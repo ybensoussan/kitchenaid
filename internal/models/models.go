@@ -201,10 +201,45 @@ type MealPlanEntry struct {
 	Servings    int    `json:"servings"`
 }
 
+// GroceryItem is the computed aggregate of a meal plan's ingredients. It is
+// derived on request and never stored.
 type GroceryItem struct {
 	Name     string   `json:"name"`
 	Amount   float64  `json:"amount"`
 	Unit     string   `json:"unit"`
 	Recipes  []string `json:"recipes"`
 	ImageURL string   `json:"image_url"`
+}
+
+// GroceryListItem is a row on the standing grocery list.
+type GroceryListItem struct {
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	Amount    float64 `json:"amount"`
+	Unit      string  `json:"unit"`
+	Checked   bool    `json:"checked"`
+	Source    string  `json:"source"`
+	RecipeID  *int64  `json:"recipe_id"`
+	CreatedAt string  `json:"created_at"`
+}
+
+// AddGroceryRequest adds one or more items to the standing list.
+type AddGroceryRequest struct {
+	Items []GroceryListItemInput `json:"items"`
+}
+
+type GroceryListItemInput struct {
+	Name     string  `json:"name"`
+	Amount   float64 `json:"amount"`
+	Unit     string  `json:"unit"`
+	Source   string  `json:"source"`
+	RecipeID *int64  `json:"recipe_id"`
+}
+
+// UpdateGroceryRequest patches a single row; nil fields are left alone.
+type UpdateGroceryRequest struct {
+	Name    *string  `json:"name"`
+	Amount  *float64 `json:"amount"`
+	Unit    *string  `json:"unit"`
+	Checked *bool    `json:"checked"`
 }

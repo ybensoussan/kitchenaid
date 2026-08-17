@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#faf9f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#141613" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14110e" media="(prefers-color-scheme: dark)">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <title>Settings — KitchenAid</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
   <link rel="stylesheet" href="/css/reset.css">
   <link rel="stylesheet" href="/css/main.css">
@@ -33,11 +33,11 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--primary, #516441);
+      color: var(--primary);
       margin-bottom: 0.6rem;
     }
     .settings-block-title {
-      font-family: var(--font-headline, 'Noto Serif', serif);
+      font-family: var(--font-headline);
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--text);
@@ -51,7 +51,7 @@
     }
     .settings-card {
       background: var(--surface-lowest, #fff);
-      border-radius: 1.25rem;
+      border-radius: var(--radius);
       padding: 1.5rem;
       margin-bottom: 0.75rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 12px rgba(0,0,0,0.04);
@@ -69,18 +69,18 @@
       gap: 1rem;
       padding: 1.1rem 1.25rem;
       background: var(--surface-lowest, #fff);
-      border-radius: 1rem;
+      border-radius: var(--radius);
       cursor: pointer;
       transition: box-shadow 0.18s, transform 0.18s;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       position: relative;
     }
     .provider-card:hover {
-      box-shadow: 0 4px 16px rgba(81,100,65,0.12);
+      box-shadow: 0 0 0 2px var(--primary);
       transform: translateY(-1px);
     }
     .provider-card.selected {
-      box-shadow: 0 0 0 2px var(--primary, #516441), 0 4px 16px rgba(81,100,65,0.12);
+      box-shadow: 0 0 0 2px var(--primary);
     }
     .provider-card input[type="radio"] {
       position: absolute;
@@ -103,12 +103,12 @@
       position: absolute;
       inset: 3px;
       border-radius: 50%;
-      background: var(--primary, #516441);
+      background: var(--primary);
       opacity: 0;
       transition: opacity 0.15s;
     }
     .provider-card.selected .provider-dot {
-      border-color: var(--primary, #516441);
+      border-color: var(--primary);
     }
     .provider-card.selected .provider-dot::after {
       opacity: 1;
@@ -144,7 +144,7 @@
       padding: 0.55rem 0.8rem;
       font-size: 0.875rem;
       font-family: 'SF Mono', 'Fira Code', monospace;
-      background: var(--surface, #faf9f8);
+      background: var(--surface-low);
       border: none;
       border-radius: 0.6rem;
       color: var(--text);
@@ -153,7 +153,7 @@
       transition: box-shadow 0.15s;
     }
     .provider-key-input:focus {
-      box-shadow: 0 0 0 2px var(--primary, #516441);
+      box-shadow: 0 0 0 2px var(--primary);
     }
     .provider-key-input::placeholder { color: var(--muted); opacity: 0.6; }
 
@@ -165,9 +165,9 @@
     }
     .model-row .form-select {
       flex: 1;
-      border-radius: 0.75rem;
+      border-radius: var(--radius);
       border: none;
-      background: var(--surface, #faf9f8);
+      background: var(--surface-low);
       padding: 0.6rem 0.9rem;
       font-size: 0.875rem;
       color: var(--text);
@@ -176,7 +176,7 @@
       transition: box-shadow 0.15s;
     }
     .model-row .form-select:focus {
-      box-shadow: 0 0 0 2px var(--primary, #516441);
+      box-shadow: 0 0 0 2px var(--primary);
     }
     #model-status {
       font-size: 0.8rem;
@@ -197,8 +197,8 @@
       align-items: center;
       gap: 0.75rem;
       padding: 1rem 1.1rem;
-      background: var(--surface, #faf9f8);
-      border-radius: 1rem;
+      background: var(--surface-low);
+      border-radius: var(--radius);
       text-decoration: none;
       color: var(--text);
       cursor: pointer;
@@ -217,8 +217,8 @@
       width: 2.25rem;
       height: 2.25rem;
       border-radius: 0.6rem;
-      background: color-mix(in srgb, var(--primary, #516441) 10%, transparent);
-      color: var(--primary, #516441);
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      color: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -235,19 +235,19 @@
     }
     .settings-save-bar .btn-primary {
       padding: 0.7rem 2rem;
-      border-radius: 9999px;
+      border-radius: var(--radius);
       font-size: 0.9rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #516441 0%, #869b74 100%);
+      background: var(--primary);
       border: none;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(81,100,65,0.25);
+      box-shadow: 3px 3px 0 var(--ink);
       transition: opacity 0.15s, box-shadow 0.15s;
     }
     .settings-save-bar .btn-primary:hover {
       opacity: 0.9;
-      box-shadow: 0 6px 20px rgba(81,100,65,0.35);
+      box-shadow: 3px 3px 0 var(--ink);
     }
     .settings-save-bar .btn-primary:disabled {
       opacity: 0.6;
@@ -266,7 +266,7 @@
     .toggle-track {
       position: absolute; inset: 0;
       background: var(--border, #e0dbd4);
-      border-radius: 9999px;
+      border-radius: var(--radius);
       cursor: pointer;
       transition: background 0.2s;
     }
@@ -280,7 +280,7 @@
       transition: transform 0.2s;
       box-shadow: 0 1px 4px rgba(0,0,0,0.18);
     }
-    #auth-enabled-toggle:checked + .toggle-track { background: var(--primary, #516441); }
+    #auth-enabled-toggle:checked + .toggle-track { background: var(--primary); }
     #auth-enabled-toggle:checked + .toggle-track::after { transform: translateX(1.35rem); }
 
     /* User row */
@@ -311,6 +311,10 @@
     <a href="/planner.html" class="editorial-nav-link">
       <span class="material-symbols-outlined">calendar_month</span>
       Planner
+    </a>
+    <a href="/grocery.html" class="editorial-nav-link">
+      <span class="material-symbols-outlined">shopping_cart</span>
+      Grocery List
     </a>
     <a href="/pantry.html" class="editorial-nav-link">
       <span class="material-symbols-outlined">shopping_basket</span>
@@ -401,7 +405,7 @@
         <select id="model-select" class="form-select">
           <option value="">— use default —</option>
         </select>
-        <button id="load-models-btn" class="btn btn-secondary" style="white-space:nowrap;border-radius:9999px;font-size:0.82rem;padding:0.5rem 1rem;">Load Models</button>
+        <button id="load-models-btn" class="btn btn-secondary" style="white-space:nowrap;border-radius: var(--radius);font-size:0.82rem;padding:0.5rem 1rem;">Load Models</button>
       </div>
       <p id="model-status"></p>
     </div>
@@ -521,7 +525,7 @@
     <div class="settings-block-desc">Accounts that can sign in. The first account registered is the owner. You can add local accounts or invite via OAuth.</div>
 
     <div class="settings-card" style="padding:0;">
-      <div id="users-table-wrap" style="overflow:hidden;border-radius:1.25rem;">
+      <div id="users-table-wrap" style="overflow:hidden;border-radius: var(--radius);">
         <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
           <thead>
             <tr style="border-bottom:1px solid var(--border);">
@@ -563,7 +567,7 @@
           <input type="password" id="new-user-password" class="provider-key-input" placeholder="••••••••">
         </div>
         <div style="display:flex;gap:0.6rem;">
-          <button id="create-user-btn" class="btn btn-primary" style="border-radius:9999px;padding:0.55rem 1.25rem;font-size:0.85rem;background:linear-gradient(135deg,#516441,#869b74);border:none;color:#fff;font-weight:700;cursor:pointer;">Create</button>
+          <button id="create-user-btn" class="btn btn-primary" style="border-radius: var(--radius);padding:0.55rem 1.25rem;font-size:0.85rem;background:var(--primary);border:none;color:#fff;font-weight:700;cursor:pointer;">Create</button>
           <button onclick="document.getElementById('add-user-form').style.display='none'" style="background:none;border:none;font-size:0.85rem;color:var(--muted);cursor:pointer;padding:0.55rem 0.75rem;">Cancel</button>
         </div>
       </div>
@@ -589,6 +593,10 @@
   <a href="/planner.html" class="editorial-bottom-nav-item">
     <span class="material-symbols-outlined">menu_book</span>
     Plans
+  </a>
+  <a href="/grocery.html" class="editorial-bottom-nav-item">
+    <span class="material-symbols-outlined">shopping_cart</span>
+    List
   </a>
   <a href="/pantry.html" class="editorial-bottom-nav-item">
     <span class="material-symbols-outlined">inventory_2</span>
@@ -769,7 +777,7 @@
         users.forEach(u => {
           const tr = document.createElement('tr');
           tr.className = 'user-row';
-          const provider = u.oauth_provider ? `<span style="font-size:0.78rem;background:color-mix(in srgb,var(--primary,#516441) 10%,transparent);color:var(--primary,#516441);border-radius:0.35rem;padding:0.15rem 0.5rem;font-weight:600;text-transform:capitalize;">${u.oauth_provider}</span>` : '<span style="font-size:0.78rem;color:var(--muted);">local</span>';
+          const provider = u.oauth_provider ? `<span style="font-size:0.78rem;background:color-mix(in srgb,var(--primary) 10%,transparent);color:var(--primary);border-radius:0.35rem;padding:0.15rem 0.5rem;font-weight:600;text-transform:capitalize;">${u.oauth_provider}</span>` : '<span style="font-size:0.78rem;color:var(--muted);">local</span>';
           tr.innerHTML = `
             <td>
               <div style="font-weight:600">${escHtml(u.display_name)}</div>

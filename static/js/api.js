@@ -96,4 +96,11 @@ const api = {
   addPlanEntry:       (planId, data)           => api.post(`/api/plans/${planId}/entries`, data),
   deletePlanEntry:    (planId, entryId)        => api.delete(`/api/plans/${planId}/entries/${entryId}`),
   getGroceryList:     (planId)                 => api.get(`/api/plans/${planId}/grocery`),
+
+  // Standing grocery list
+  listGrocery:        ()                       => api.get('/api/grocery'),
+  addGrocery:         (items)                  => api.post('/api/grocery', { items }),
+  updateGrocery:      (id, patch)              => api.patch(`/api/grocery/${id}`, patch),
+  deleteGrocery:      (id)                     => api.delete(`/api/grocery/${id}`),
+  clearCheckedGrocery: ()                      => api.delete('/api/grocery/checked'),
 };

@@ -1,65 +1,80 @@
 /* ═══════════════════════════════════════════════════════
-   The Editorial Kitchen — Design System
+   KitchenAid — Design System
    Loads after main.css / recipe.css / grid.css to override
+
+   Direction: market-stall, not magazine. White paper, ink hairlines,
+   tight corners, and colour used like a price label — saturated, flat,
+   and only where it means something (actions, state, freshness).
    ═══════════════════════════════════════════════════════ */
 
 /* ── 1. DESIGN TOKENS ── */
 :root {
-  /* Sage primary */
-  --primary:               #516441;
-  --primary-container:     #869b74;
-  --primary-fixed:         #d3eabe;
-  --primary-fixed-dim:     #b7cea3;
+  /* Brand — burnt orange for anything that must also work as text,
+     bright orange for fills that carry ink text. */
+  --primary:               #c2410c;
+  --primary-container:     #ff7a18;
+  --primary-fixed:         #ffe4d0;
+  --primary-fixed-dim:     #ffd0b0;
   --on-primary:            #ffffff;
-  --on-primary-container:  #213214;
+  --on-primary-container:  #14110e;
 
-  /* Wood secondary */
-  --secondary:             #7c5730;
-  --secondary-container:   #fdcb9b;
+  /* No second hue: the scheme is orange, ink and paper. */
+  --secondary:             #c2410c;
+  --secondary-container:   #ffe4d0;
   --on-secondary:          #ffffff;
-  --on-secondary-container:#79542d;
+  --on-secondary-container:#5c1d00;
 
-  /* Surfaces */
-  --surface:               #faf9f8;
+  /* Surfaces — white paper, warm neutral steps */
+  --surface:               #ffffff;
   --surface-lowest:        #ffffff;
-  --surface-low:           #f4f3f2;
-  --surface-mid:           #eeeeed;
-  --surface-high:          #e9e8e7;
-  --surface-highest:       #e3e2e1;
-  --surface-dim:           #dadad9;
+  --surface-low:           #f6f4f2;
+  --surface-mid:           #eeebe8;
+  --surface-high:          #e5e1dd;
+  --surface-highest:       #d9d4cf;
+  --surface-dim:           #c8c2bc;
 
   /* Text / outline */
-  --on-surface:            #1a1c1c;
-  --on-surface-variant:    #44483f;
-  --outline:               #75786e;
-  --outline-variant:       #c5c8bc;
+  --on-surface:            #14110e;
+  --on-surface-variant:    #57504a;
+  --outline:               #7a726b;
+  --outline-variant:       #ccc5bf;
 
-  /* Error */
-  --error:                 #8b3a3a;
-  --error-container:       #f2e0e0;
-  --on-error-container:    #5c1f1f;
+  /* Error — deliberately cooler and darker than the brand orange,
+     so destructive actions never read as primary ones. */
+  --error:                 #b3121b;
+  --error-container:       #ffe1e1;
+  --on-error-container:    #5c0a0e;
 
-  /* Tertiary */
-  --tertiary:              #675d4d;
-  --tertiary-fixed:        #f0e0cc;
+  /* Tertiary — neutral; a third hue would fight the orange */
+  --tertiary:              #6b6560;
+  --tertiary-fixed:        #f0eeec;
+
+  /* ── Accents ── */
+  --ink:           #14110e;
+  --accent:        #c2410c;
+  --accent-bright: #ff7a18;
 
   /* ── Legacy compat (used by existing CSS/JS) ── */
-  --brand:       #516441;
-  --brand-dark:  #3a4c2c;
-  --bg:          #faf9f8;
-  --text:        #1a1c1c;
-  --muted:       #44483f;
-  --border:      rgba(197,200,188,0.25);
-  --hover-bg:    #f4f3f2;
-  --hover-soft:  #f4f3f2;
-  --radius:      0.75rem;
-  --shadow:      0 10px 30px -10px rgba(81,100,65,0.08);
-  --shadow-lg:   0 20px 40px -10px rgba(81,100,65,0.15);
-  --transition:  0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --brand:       #c2410c;
+  --brand-dark:  #9a3309;
+  --bg:          #ffffff;
+  --text:        #14110e;
+  --muted:       #57504a;
+  --border:      rgba(20,17,14,0.16);
+  --hover-bg:    #f6f4f2;
+  --hover-soft:  #f6f4f2;
+  --radius:      0.25rem;
+  --shadow:      0 1px 2px rgba(20,17,14,0.10);
+  --shadow-lg:   0 6px 20px -6px rgba(20,17,14,0.22);
+  /* Signature: a hard offset block, like a stamped label. Used only on
+     the primary action and the active nav item. */
+  --shadow-hard: 3px 3px 0 var(--ink);
+  --transition:  0.14s cubic-bezier(0.2, 0, 0, 1);
 
-  /* Fonts */
-  --font-headline: 'Noto Serif', Georgia, 'Times New Roman', serif;
-  --font-body:     'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Fonts — one grotesk, hierarchy from weight and tracking. No serif,
+     no italic: the wordmark and headings read as signage. */
+  --font-headline: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body:     'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Layout */
   --sidebar-width:    256px;
@@ -69,52 +84,60 @@
 
 /* ── 1b. DARK MODE TOKENS ── */
 [data-theme="dark"] {
-  --primary:               #90ba76;
-  --primary-container:     #3e5834;
-  --primary-fixed:         #2e4424;
-  --primary-fixed-dim:     #243a1c;
-  --on-primary:            #1e3218;
-  --on-primary-container:  #c0d6ac;
+  /* Orange gets brighter on dark, not duller */
+  --primary:               #ff8a3d;
+  --primary-container:     #ff7a18;
+  --primary-fixed:         #43220c;
+  --primary-fixed-dim:     #35190a;
+  --on-primary:            #2b1300;
+  --on-primary-container:  #ffd9bd;
 
-  --secondary:             #d4a076;
-  --secondary-container:   #5a3d1c;
-  --on-secondary:          #3d2110;
-  --on-secondary-container:#fdcb9b;
+  --secondary:             #ff8a3d;
+  --secondary-container:   #43220c;
+  --on-secondary:          #2b1300;
+  --on-secondary-container:#ffd9bd;
 
-  /* Softer dark — charcoal, not black; clear steps between layers */
-  --surface:               #2c2927;
-  --surface-lowest:        #231f1d;
-  --surface-low:           #343130;
-  --surface-mid:           #3c3938;
-  --surface-high:          #444140;
-  --surface-highest:       #4c4a48;
-  --surface-dim:           #545250;
+  /* Warm charcoal; clear steps between layers */
+  --surface:               #14110e;
+  --surface-lowest:        #1c1815;
+  --surface-low:           #221e1a;
+  --surface-mid:           #2a2521;
+  --surface-high:          #332d28;
+  --surface-highest:       #3f3831;
+  --surface-dim:           #4b433b;
 
-  --on-surface:            #ece7e0;
-  --on-surface-variant:    #b8b3ac;
-  --outline:               #8a8780;
-  --outline-variant:       #4c4a46;
+  --on-surface:            #f5f1ec;
+  --on-surface-variant:    #bdb5ad;
+  --outline:               #8a8177;
+  --outline-variant:       #3f3831;
 
-  --error:                 #d4908a;
-  --error-container:       #5c2828;
-  --on-error-container:    #f2d0cc;
+  /* Rose-red, so it stays distinct from the orange */
+  --error:                 #ff5470;
+  --error-container:       #59101d;
+  --on-error-container:    #ffd6dd;
 
-  --tertiary:              #bab0a0;
-  --tertiary-fixed:        #453c2e;
+  --tertiary:              #bdb5ad;
+  --tertiary-fixed:        #332d28;
+
+  --ink:           #f5f1ec;
+  --accent:        #ff8a3d;
+  --accent-bright: #ff7a18;
 
   /* legacy compat */
-  --brand:       #90ba76;
-  --brand-dark:  #74a05a;
-  --bg:          #2c2927;
-  --text:        #ece7e0;
-  --muted:       #a09890;
-  --border:      rgba(90,86,80,0.55);
-  --hover-bg:    #3c3938;
-  --hover-soft:  #343130;
+  --brand:       #ff8a3d;
+  --brand-dark:  #ff7a18;
+  --bg:          #14110e;
+  --text:        #f5f1ec;
+  --muted:       #bdb5ad;
+  --border:      rgba(245,241,236,0.18);
+  --hover-bg:    #2a2521;
+  --hover-soft:  #221e1a;
+  --shadow:      0 1px 2px rgba(0,0,0,0.5);
+  --shadow-lg:   0 6px 20px -6px rgba(0,0,0,0.7);
 }
 
 [data-theme="dark"] .editorial-sidebar {
-  background: #231f1d;
+  background: #0d0b09;
 }
 
 /* ── 2. BASE ── */
@@ -134,7 +157,7 @@ body {
   top: 0; left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background: #f5f4f3;
+  background: var(--surface-low);
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -147,9 +170,8 @@ body {
 }
 .editorial-sidebar-brand h1 {
   font-family: var(--font-headline);
-  font-style: italic;
   font-size: 1.15rem;
-  color: #213214;
+  color: var(--text);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -177,7 +199,7 @@ body {
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #5a5d55;
+  color: var(--muted);
   text-decoration: none;
   transition: background var(--transition), color var(--transition);
   cursor: pointer;
@@ -191,8 +213,8 @@ body {
 }
 .editorial-nav-link.active {
   background: var(--surface-lowest);
-  color: #213214;
-  box-shadow: 0 1px 4px rgba(81,100,65,0.1);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(194,65,12,0.1);
 }
 .editorial-nav-link .material-symbols-outlined {
   font-size: 1.15rem;
@@ -204,10 +226,10 @@ body {
 }
 .editorial-sidebar-cta button {
   width: 100%;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  background: var(--primary);
   color: var(--on-primary);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   padding: 0.75rem 1.25rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -230,8 +252,8 @@ body {
   background: rgba(255,255,255,0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(197,200,188,0.2);
-  box-shadow: 0 1px 0 rgba(197,200,188,0.15);
+  border-bottom: 1px solid rgba(20,17,14,0.32);
+  box-shadow: 0 1px 0 rgba(20,17,14,0.24);
 }
 .editorial-topnav-inner {
   display: flex;
@@ -245,7 +267,7 @@ body {
   font-family: var(--font-headline);
   font-size: 1.25rem;
   font-weight: 700;
-  color: #213214;
+  color: var(--text);
   letter-spacing: -0.02em;
   display: block;
 }
@@ -278,7 +300,7 @@ body {
 .editorial-search-input::placeholder { color: var(--outline); }
 .editorial-search-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(81,100,65,0.2);
+  box-shadow: 0 0 0 2px rgba(194,65,12,0.2);
 }
 
 .editorial-topnav-actions {
@@ -294,7 +316,7 @@ body {
   gap: 0.5rem;
   background: var(--surface-highest);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   padding: 0.55rem 1.25rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -309,7 +331,7 @@ body {
   background: none;
   border: none;
   padding: 0.5rem;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   color: var(--outline);
   cursor: pointer;
   display: flex;
@@ -359,7 +381,6 @@ body {
   line-height: 1.15;
 }
 .editorial-headline em {
-  font-style: italic;
   font-weight: 400;
 }
 
@@ -371,8 +392,8 @@ body {
 }
 .editorial-filter-pill {
   padding: 0.45rem 1.1rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(197,200,188,0.5);
+  border-radius: var(--radius);
+  border: 1px solid rgba(20,17,14,0.40);
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--on-surface);
@@ -391,8 +412,8 @@ body {
 /* Restyle old tag-filter-btn to editorial pill */
 .tag-filter-btn {
   padding: 0.17rem 0.55rem !important;
-  border-radius: 9999px !important;
-  border: 1px solid rgba(197,200,188,0.5) !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid rgba(20,17,14,0.40) !important;
   font-size: 0.68rem !important;
   font-weight: 500 !important;
   color: var(--on-surface) !important;
@@ -410,7 +431,7 @@ body {
 .fav-filter-btn, .fav-filter-btn.active {
   color: inherit !important;
   background: none !important;
-  border-color: rgba(197,200,188,0.5) !important;
+  border-color: rgba(20,17,14,0.40) !important;
 }
 .fav-filter-btn.active {
   background: var(--primary) !important;
@@ -459,7 +480,7 @@ body {
   transition: box-shadow var(--transition);
 }
 .recipe-card:hover .recipe-card-image {
-  box-shadow: 0 20px 40px -10px rgba(81,100,65,0.18);
+  box-shadow: 0 20px 40px -10px rgba(194,65,12,0.18);
 }
 .recipe-card-image img {
   width: 100%;
@@ -487,10 +508,10 @@ body {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(8px);
+  background: var(--surface);
+  border: 1px solid var(--ink);
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -506,7 +527,7 @@ body {
   background: rgba(255,255,255,0.9) !important;
   backdrop-filter: blur(8px);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius);
   width: 1.6rem;
   height: 1.6rem;
   display: flex;
@@ -596,7 +617,7 @@ body {
 .content-search-input {
   width: 100%;
   background: var(--surface-low);
-  border: 1px solid rgba(197,200,188,0.25);
+  border: 1px solid rgba(20,17,14,0.40);
   border-radius: var(--radius);
   padding: 0.65rem 1rem 0.65rem 2.6rem;
   font-size: 0.9rem;
@@ -607,7 +628,7 @@ body {
 .content-search-input::placeholder { color: var(--outline); }
 .content-search-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(81,100,65,0.2);
+  box-shadow: 0 0 0 2px rgba(194,65,12,0.2);
 }
 .tag-filters {
   display: flex !important;
@@ -625,7 +646,6 @@ body {
 .empty-state h2 {
   font-family: var(--font-headline);
   font-size: 2rem;
-  font-style: italic;
   color: var(--on-surface);
   margin-bottom: 0.75rem;
 }
@@ -634,22 +654,22 @@ body {
 /* ── 13. BUTTONS (editorial overrides) ── */
 :not(.cooking-mode) .btn-primary,
 :not(.cooking-mode) > .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  background: var(--primary);
   color: var(--on-primary);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 :not(.cooking-mode) .btn-primary:hover {
-  background: linear-gradient(135deg, #3a4c2c 0%, var(--primary) 100%);
+  background: var(--brand-dark);
   color: var(--on-primary);
 }
 :not(.cooking-mode) .btn-secondary {
   background: var(--surface-highest);
   color: var(--secondary);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
 }
 :not(.cooking-mode) .btn-secondary:hover { background: var(--surface-dim); }
 
@@ -659,6 +679,10 @@ body {
   border-radius: var(--radius);
   font-weight: 600;
   letter-spacing: 0;
+}
+.cooking-mode .btn-primary {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
 }
 .cooking-mode .btn-secondary {
   background: var(--surface);
@@ -677,8 +701,8 @@ body {
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(197,200,188,0.2);
-  box-shadow: 0 -4px 20px rgba(81,100,65,0.08);
+  border-top: 1px solid rgba(20,17,14,0.32);
+  box-shadow: 0 -4px 20px rgba(194,65,12,0.08);
   border-radius: 1.25rem 1.25rem 0 0;
   padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
   justify-content: space-around;
@@ -693,7 +717,7 @@ body {
   padding: 0.4rem 1.25rem;
   border-radius: 1rem;
   text-decoration: none;
-  color: #9a9a9a;
+  color: var(--muted);
   font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -705,8 +729,8 @@ body {
   font-family: var(--font-body);
 }
 .editorial-bottom-nav-item.active {
-  background: rgba(81,100,65,0.1);
-  color: #213214;
+  background: var(--primary-fixed);
+  color: var(--on-primary-container);
 }
 .editorial-bottom-nav-item .material-symbols-outlined { font-size: 1.4rem; }
 
@@ -729,18 +753,17 @@ body {
 }
 .modal-title {
   font-family: var(--font-headline);
-  font-style: italic;
   font-size: 1.4rem;
 }
 .modal-footer {
-  border-top: 1px solid rgba(197,200,188,0.2);
+  border-top: 1px solid rgba(20,17,14,0.32);
   padding: 1rem 1.5rem;
 }
 
 /* ── 17. IMPORT TABS ── */
 .import-tab-bar { gap: 0.25rem; padding: 0 1.5rem 0.75rem; }
 .import-tab {
-  border-radius: 9999px;
+  border-radius: var(--radius);
   font-size: 0.8rem;
   font-weight: 600;
   padding: 0.35rem 0.9rem;
@@ -810,8 +833,8 @@ body {
   display: flex;
   gap: 2.5rem;
   padding: 1.5rem 0;
-  border-top: 1px solid rgba(197,200,188,0.3);
-  border-bottom: 1px solid rgba(197,200,188,0.3);
+  border-top: 1px solid rgba(20,17,14,0.40);
+  border-bottom: 1px solid rgba(20,17,14,0.40);
   margin-bottom: 2rem;
 }
 .recipe-meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
@@ -839,7 +862,7 @@ body {
   background: var(--surface-low);
   color: var(--on-surface-variant);
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   font-size: 0.75rem;
   font-weight: 600;
   display: inline-flex;
@@ -882,7 +905,7 @@ body {
   flex-wrap: wrap;
   gap: 0.75rem;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(197,200,188,0.2);
+  border-bottom: 1px solid rgba(20,17,14,0.32);
 }
 .ingredients-card-header .section-title {
   font-family: var(--font-headline);
@@ -894,7 +917,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(197,200,188,0.2);
+  border-bottom: 1px solid rgba(20,17,14,0.32);
 }
 .servings-label {
   font-size: 0.75rem;
@@ -916,7 +939,7 @@ body {
 .serving-btn {
   background: var(--surface-highest);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   padding: 0.2rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -939,8 +962,8 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0.75rem;
-  border-radius: 0.75rem;
-  background: rgba(255,255,255,0.5);
+  border-radius: var(--radius);
+  background: var(--surface-low);
   transition: background var(--transition);
   font-size: 0.875rem;
 }
@@ -959,7 +982,6 @@ body {
 .ingredient-notes {
   font-size: 0.75rem;
   color: var(--outline);
-  font-style: italic;
 }
 
 /* Ingredient action buttons */
@@ -984,15 +1006,15 @@ body {
   display: flex;
   gap: 0.5rem;
   padding: 0.75rem 1rem 1rem;
-  border-top: 1px solid rgba(197,200,188,0.15);
+  border-top: 1px solid rgba(20,17,14,0.24);
 }
 .ingredients-add-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   background: none;
-  border: 1px dashed rgba(197,200,188,0.6);
-  border-radius: 9999px;
+  border: 1px dashed rgba(20,17,14,0.40);
+  border-radius: var(--radius);
   color: var(--primary);
   font-size: 0.78rem;
   font-weight: 600;
@@ -1007,14 +1029,14 @@ body {
 .units-toggle {
   display: flex;
   background: var(--surface-highest);
-  border-radius: 9999px;
+  border-radius: var(--radius);
   padding: 0.2rem;
   gap: 0.1rem;
 }
 .unit-btn {
   padding: 0.25rem 0.75rem;
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius);
   background: none;
   font-size: 0.75rem;
   font-weight: 600;
@@ -1058,37 +1080,35 @@ body {
   padding: 2.5rem 0;
   margin-bottom: 0;
   border: none;
-  border-bottom: 1px solid rgba(197,200,188,0.15);
+  border-bottom: 1px solid rgba(20,17,14,0.24);
   background: none;
   border-radius: 0;
   transition: none;
 }
 .step-item:first-child { padding-top: 0; }
 .step-item:last-child { border-bottom: none; padding-bottom: 0; }
-.step-item:hover { border-color: rgba(197,200,188,0.15); cursor: default; }
+.step-item:hover { border-color: rgba(20,17,14,0.24); cursor: default; }
 body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer; }
 
 /* Step number — styled as editorial badge */
 .step-number {
   flex-shrink: 0;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 0.75rem;
-  border: 2px solid rgba(81,100,65,0.2);
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-headline);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--primary);
-  background: rgba(81,100,65,0.04);
-  transition: all var(--transition);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+  transition: box-shadow var(--transition), transform var(--transition);
 }
 .step-item:hover .step-number {
-  background: var(--primary);
-  color: var(--on-primary);
-  border-color: var(--primary);
+  box-shadow: var(--shadow-hard);
 }
 .step-content {
   flex: 1;
@@ -1163,7 +1183,7 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 .cook-ingredient-list, .cook-steps-list { list-style: none; padding: 0; }
 .cook-ingredient-item, .cook-step-item {
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid rgba(197,200,188,0.2);
+  border-bottom: 1px solid rgba(20,17,14,0.32);
   cursor: pointer;
 }
 .cook-ingredient-item.checked { opacity: 0.5; }
@@ -1185,9 +1205,9 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
   box-shadow: var(--shadow);
   overflow: hidden;
 }
-.pantry-search { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(197,200,188,0.2); }
+.pantry-search { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(20,17,14,0.32); }
 .pantry-item {
-  border-bottom: 1px solid rgba(197,200,188,0.15);
+  border-bottom: 1px solid rgba(20,17,14,0.24);
   padding: 1rem 1.5rem;
   font-size: 0.9rem;
   gap: 1rem;
@@ -1223,7 +1243,6 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 .section-card h2 {
   font-family: var(--font-headline);
   font-size: 1.35rem;
-  font-style: italic;
   margin-bottom: 1.5rem;
   color: var(--on-surface);
 }
@@ -1245,23 +1264,22 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 }
 
 .add-row-btn {
-  border-radius: 9999px;
+  border-radius: var(--radius);
   color: var(--primary);
-  border-color: rgba(81,100,65,0.3);
+  border-color: rgba(194,65,12,0.3);
 }
 .add-row-btn:hover { background: var(--primary-fixed); }
 
 .page-title {
   font-family: var(--font-headline);
   font-size: 2.5rem;
-  font-style: italic;
   color: var(--on-surface);
 }
 
 /* ── Form overrides ── */
 .form-input, .form-textarea, .form-select {
   background: var(--surface-lowest);
-  border: 1px solid rgba(197,200,188,0.4);
+  border: 1px solid rgba(20,17,14,0.40);
   border-radius: var(--radius);
   font-family: var(--font-body);
   color: var(--on-surface);
@@ -1270,7 +1288,7 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(81,100,65,0.15);
+  box-shadow: 0 0 0 2px rgba(194,65,12,0.15);
 }
 .form-label {
   font-size: 0.75rem;
@@ -1288,7 +1306,7 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
 }
 .search-input:focus {
   border-color: transparent;
-  box-shadow: 0 0 0 2px rgba(81,100,65,0.2);
+  box-shadow: 0 0 0 2px rgba(194,65,12,0.2);
 }
 
 /* ── Dropdown ── */
@@ -1328,4 +1346,241 @@ body.edit-mode .step-item:hover { border-color: var(--primary); cursor: pointer;
   .recipe-card-image { aspect-ratio: 3 / 2; }
   .recipe-card-title { font-size: 0.82rem; }
   .recipe-card-meta { font-size: 0.7rem; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   21. SHARPENING LAYER
+   Appended last so it settles the look without re-opening the
+   rules above. Three moves: ink rules instead of soft shadow,
+   flat saturated fills, and one hard offset shadow used sparingly.
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Bars: a drawn rule, not a blur ── */
+.editorial-topnav {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1.5px solid var(--ink);
+  box-shadow: none;
+}
+.editorial-sidebar {
+  background: var(--surface);
+  border-right: 1.5px solid var(--ink);
+}
+.editorial-bottom-nav {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1.5px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* No cursive: <em> and <i> carry emphasis by weight, not slant. */
+em, i, .editorial-headline em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* ── Wordmark ── */
+.editorial-sidebar-brand h1,
+.editorial-topnav-brand {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.recipe-title,
+.editorial-headline,
+.settings-block-title,
+.page-title,
+.section-card h2,
+.empty-state h2,
+.modal-title {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ── Micro-labels: the eyebrows, meta labels and nav captions ── */
+.editorial-eyebrow,
+.recipe-meta-label,
+.cook-panel-label,
+.editorial-bottom-nav-item {
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+/* ── Primary action: flat fill, ink edge, stamped shadow ── */
+:not(.cooking-mode) .btn-primary,
+:not(.cooking-mode) > .btn-primary,
+.editorial-sidebar-cta button {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+  transition: transform var(--transition), box-shadow var(--transition),
+              background var(--transition);
+}
+:not(.cooking-mode) .btn-primary:hover,
+.editorial-sidebar-cta button:hover {
+  background: var(--primary-container);
+  opacity: 1;
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+:not(.cooking-mode) .btn-primary:active,
+.editorial-sidebar-cta button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+/* ── Secondary action ── */
+/* :not(.cooking-mode) above outranks a bare .btn-secondary, so match it.
+   Secondaries stay ink-on-paper — the green primary should be the only
+   thing shouting in a toolbar. */
+:not(.cooking-mode) .btn-secondary,
+.editorial-import-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  color: var(--text);
+  box-shadow: none;
+}
+:not(.cooking-mode) .btn-secondary:hover,
+.editorial-import-btn:hover {
+  background: var(--primary-fixed);
+  color: var(--on-primary-container);
+}
+
+/* ── Surfaces: separated by rules, not shadows ── */
+.recipe-card-image,
+.ingredients-card,
+.step-item,
+.settings-card,
+.pantry-card,
+.day-card,
+.modal,
+.dropdown-menu,
+.cook-timer-card,
+.section-card,
+.add-form,
+.grocery-section {
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+.ingredients-card,
+.step-item,
+.pantry-card,
+.day-card,
+.settings-card,
+.cook-timer-card,
+.section-card,
+.add-form,
+.grocery-section {
+  border: 1px solid var(--ink);
+}
+.recipe-card:hover .recipe-card-image { box-shadow: var(--shadow-hard); }
+.modal,
+.dropdown-menu { border: 1.5px solid var(--ink); box-shadow: var(--shadow-lg); }
+
+/* ── Chips and filters: outlined, then filled hard when on ── */
+.pantry-filter-btn,
+.chip-mult-btn,
+.serving-btn,
+.unit-btn,
+.cook-unit-btn,
+.import-tab {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--ink) !important;
+  font-weight: 600;
+}
+/* The tag strip runs to 40+ chips — an ink outline on every one is noise.
+   Keep them quiet until selected. */
+.tag-filter-btn,
+.recipe-tag {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  font-weight: 600;
+}
+.tag-filter-btn.active,
+.pantry-filter-btn.active,
+.chip-mult-btn.active,
+.serving-btn.active,
+.unit-btn.active,
+.cook-unit-btn.active,
+.fav-filter-btn.active {
+  background: var(--primary-container) !important;
+  color: var(--on-primary-container) !important;
+  border-color: var(--ink) !important;
+}
+
+/* ── Nav state ── */
+.editorial-nav-link {
+  border-radius: var(--radius);
+  border: 1.5px solid transparent;
+  font-weight: 600;
+}
+.editorial-nav-link.active {
+  background: var(--primary-fixed);
+  color: var(--on-primary-container);
+  border-color: var(--ink);
+  box-shadow: none;
+}
+.editorial-bottom-nav-item.active {
+  background: var(--primary-fixed);
+  color: var(--on-primary-container);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+}
+
+/* ── Inputs: visible edge, solid focus ── */
+.form-input,
+.form-textarea,
+.form-select,
+.editorial-search-input,
+.content-search-input {
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus,
+.editorial-search-input:focus,
+.content-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+/* Keyboard focus stays obvious and does not rely on colour alone */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Favourite: the one place persimmon appears unprompted ── */
+.card-fav-btn.active,
+#fav-btn.active {
+  color: var(--accent) !important;
+}
+
+/* ── Photos ── */
+.recipe-photo-wrap,
+.photo-upload-overlay {
+  border-radius: var(--radius);
+}
+.recipe-photo-wrap { border: 1px solid var(--ink); }
+.photo-action-btn { border-radius: var(--radius); }
+
+@media (prefers-reduced-motion: reduce) {
+  :not(.cooking-mode) .btn-primary,
+  .editorial-sidebar-cta button {
+    transition: none;
+  }
+  :not(.cooking-mode) .btn-primary:hover,
+  :not(.cooking-mode) .btn-primary:active,
+  .editorial-sidebar-cta button:hover,
+  .editorial-sidebar-cta button:active {
+    transform: none;
+  }
 }

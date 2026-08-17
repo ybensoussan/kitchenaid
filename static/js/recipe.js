@@ -553,6 +553,7 @@
           <span class="ingredient-amount">${escHtml(fmt)}</span>
           <span class="ingredient-name">${escHtml(ing.name)}</span>
           ${ing.notes ? `<span class="ingredient-notes">${escHtml(ing.notes)}</span>` : ''}
+          <button class="ing-add-grocery-btn" data-id="${ing.id}" title="Add to grocery list"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></button>
           ${!linked ? `<button class="ing-add-pantry-btn" data-id="${ing.id}" title="Add to pantry &amp; link">+P</button>` : ''}
           <button class="ing-link-btn${linked ? ' linked' : ''}" data-id="${ing.id}" title="${escHtml(linkTitle)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
           <button class="ing-alt-btn" data-id="${ing.id}" title="Find alternatives"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg></button>
@@ -566,6 +567,26 @@
         const id = parseInt(el.dataset.id, 10);
         const ing = ings.find(i => i.id === id);
         if (ing) editor.openIngredientModal(ing, ings, null);
+      });
+    });
+
+    // Wire quick "add to grocery list" buttons. Sends what is on screen —
+    // the scaled amount in the unit system currently selected.
+    list.querySelectorAll('.ing-add-grocery-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id, 10);
+        const ing = ings.find(i => i.id === id);
+        if (!ing) return;
+        btn.disabled = true;
+        try {
+          await api.addGrocery([groceryPayload(ing)]);
+          showToast(`"${ing.name}" added to the list`);
+        } catch (err) {
+          showToast('Failed: ' + err.message, true);
+        } finally {
+          btn.disabled = false;
+        }
       });
     });
 
@@ -1581,6 +1602,35 @@
       recipeId,
       onDone: refreshIngredients,
     }));
+
+  // Whole dish -> grocery list, at the servings currently on screen.
+  document.getElementById('add-all-grocery-btn')?.addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    const ings = recipe.ingredients || [];
+    if (!ings.length) { showToast('This recipe has no ingredients'); return; }
+    btn.disabled = true;
+    try {
+      await api.addGrocery(ings.map(groceryPayload));
+      showToast(`${ings.length} ingredient${ings.length === 1 ? '' : 's'} added to the list`);
+    } catch (err) {
+      showToast('Failed: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Amounts go to the server in metric, like everything else in this app —
+  // the grocery page converts for display. Sending the formatted string back
+  // would mean re-parsing fractions like "½".
+  function groceryPayload(ing) {
+    return {
+      name: ing.name,
+      amount: scaling.getScaledAmount(ing.amount) || 0,
+      unit: ing.unit || '',
+      source: recipe.title,
+      recipe_id: recipeId,
+    };
+  }
 })();
 
 function escHtml(s) {

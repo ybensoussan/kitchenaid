@@ -89,4 +89,21 @@ CREATE TABLE IF NOT EXISTS meal_plan_entries (
     meal_type    TEXT    NOT NULL,
     servings     INTEGER NOT NULL DEFAULT 1
 );
+
+-- Standing grocery list. Independent of any meal plan: items arrive from a
+-- recipe, from a week's plan, or typed by hand, and persist until ticked off.
+-- recipe_id is only provenance ("why is this on my list"), so deleting the
+-- recipe leaves the item alone.
+CREATE TABLE IF NOT EXISTS grocery_items (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    amount     REAL    NOT NULL DEFAULT 0,
+    unit       TEXT    NOT NULL DEFAULT '',
+    checked    INTEGER NOT NULL DEFAULT 0,
+    source     TEXT    NOT NULL DEFAULT '',
+    recipe_id  INTEGER REFERENCES recipes(id) ON DELETE SET NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_grocery_checked ON grocery_items(checked, id);
 `

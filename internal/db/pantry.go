@@ -67,6 +67,32 @@ func (s *Store) DeletePantryItem(id int64) error {
 	return err
 }
 
+// GetPantryItemRecipes returns all recipes that have at least one ingredient linked to pantryItemID.
+func (s *Store) GetPantryItemRecipes(pantryItemID int64) ([]models.Recipe, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT r.id, r.title, r.image_url
+		FROM recipes r
+		JOIN ingredients i ON i.recipe_id = r.id
+		WHERE i.pantry_item_id = ?
+		ORDER BY r.title`, pantryItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var recipes []models.Recipe
+	for rows.Next() {
+		var r models.Recipe
+		if err := rows.Scan(&r.ID, &r.Title, &r.ImageURL); err != nil {
+			return nil, err
+		}
+		recipes = append(recipes, r)
+	}
+	if recipes == nil {
+		recipes = []models.Recipe{}
+	}
+	return recipes, rows.Err()
+}
+
 // MergePantryItems re-links all ingredients from mergeID → keepID, then deletes mergeID.
 func (s *Store) MergePantryItems(keepID, mergeID int64) error {
 	tx, err := s.db.Begin()

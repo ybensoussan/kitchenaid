@@ -93,3 +93,17 @@ func (h *Handler) DeletePantryItem(w http.ResponseWriter, r *http.Request) {
 	}
 	h.writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
+
+func (h *Handler) GetPantryItemRecipes(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+	recipes, err := h.Store.GetPantryItemRecipes(id)
+	if err != nil {
+		h.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.writeJSON(w, http.StatusOK, recipes)
+}

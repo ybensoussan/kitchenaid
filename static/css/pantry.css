@@ -47,7 +47,7 @@
 .sm-option { display:flex;align-items:center;gap:.45rem;font-size:.85rem }
 .sm-option input[type=radio] { flex-shrink:0 }
 .conf-badge { font-size:.68rem;padding:.1rem .35rem;border-radius:999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em }
-.conf-high   { background:#dcfce7;color:#166534 }
+.conf-high   { background:var(--primary-fixed);color:var(--on-primary-container) }
 .conf-medium { background:#fef9c3;color:#854d0e }
 .conf-low    { background:#fee2e2;color:#991b1b }
 .sm-search-box { margin-top:.35rem;padding-left:1.4rem }
@@ -74,7 +74,7 @@
 .pantry-card-image img { width:100%; height:100%; object-fit:cover; }
 .pantry-card-img-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--outline); opacity:.35; }
 .pantry-card-img-placeholder .material-symbols-outlined { font-size:2rem; }
-.pantry-img-btn { position:absolute; bottom:.35rem; right:.35rem; background:rgba(255,255,255,.9); border:none; border-radius:50%; width:1.5rem; height:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity .15s; z-index:1; }
+.pantry-img-btn { position:absolute; bottom:.35rem; right:.35rem; background:rgba(255,255,255,.9); border:none; border-radius:var(--radius); width:1.5rem; height:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity .15s; z-index:1; }
 .pantry-img-btn .material-symbols-outlined { font-size:.8rem; }
 .pantry-card:hover .pantry-img-btn { opacity:1; }
 .pantry-card-body { padding:.6rem .7rem; }

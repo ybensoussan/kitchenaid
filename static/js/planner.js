@@ -238,6 +238,7 @@ function renderPlanContent() {
               <button class="unit-toggle-btn" data-sys="imperial">imperial</button>
             </div>
             <button class="btn btn-secondary" id="gen-grocery-btn">Generate</button>
+            <button class="btn btn-primary" id="send-grocery-btn" style="display:none;">Add to list</button>
             <button class="btn btn-secondary" id="copy-grocery-btn" style="display:none;">Copy</button>
           </div>
         </div>
@@ -255,6 +256,26 @@ function renderPlanContent() {
 
   document.getElementById('gen-grocery-btn').addEventListener('click', loadGroceryList);
   document.getElementById('copy-grocery-btn').addEventListener('click', copyGroceryList);
+
+  // Push this week's aggregate onto the standing grocery list.
+  document.getElementById('send-grocery-btn').addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    if (!groceryItems.length) return;
+    btn.disabled = true;
+    try {
+      await api.addGrocery(groceryItems.map(g => ({
+        name: g.name,
+        amount: g.amount,
+        unit: g.unit,
+        source: (g.recipes || []).join(', '),
+      })));
+      showToast(`Added ${groceryItems.length} items to your grocery list`);
+    } catch (err) {
+      showToast(`Could not add: ${err.message}`, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   // Unit toggle buttons
   const unitToggle = document.getElementById('grocery-unit-toggle');
@@ -494,19 +515,21 @@ async function loadGroceryList() {
 function renderGroceryList() {
   const list = document.getElementById('grocery-list');
   const copyBtn = document.getElementById('copy-grocery-btn');
+  const sendBtn = document.getElementById('send-grocery-btn');
   if (!list) return;
 
   if (groceryItems.length === 0) {
     list.innerHTML = '<li class="grocery-empty">No ingredients found. Add recipes to the planner first.</li>';
     if (copyBtn) copyBtn.style.display = 'none';
+    if (sendBtn) sendBtn.style.display = 'none';
     return;
   }
+  if (sendBtn) sendBtn.style.display = '';
 
   if (copyBtn) copyBtn.style.display = '';
 
   list.innerHTML = groceryItems.map((item, idx) => {
     const inPantry = inPantryKeys.has(pantryKey(item));
-    const recipesStr = item.recipes.join(', ');
     const amtDisplay = item.amount > 0 ? units.formatAmount(item.amount, item.unit) : (item.unit || '');
     const amountControls = item.amount > 0 && !inPantry
       ? `<div class="grocery-amount-ctrl">
@@ -518,12 +541,16 @@ function renderGroceryList() {
     const imgPart = item.image_url
       ? `<img class="grocery-item-img" src="${escHtml(item.image_url)}" alt="" loading="lazy">`
       : `<div class="grocery-item-img-placeholder"></div>`;
+    const chips = (item.recipes || []).map(r => `<span class="grocery-item-recipe-chip">${escHtml(r)}</span>`).join('');
+    const recipesRow = chips ? `<div class="grocery-item-recipes">${chips}</div>` : '';
     return `<li class="grocery-item${inPantry ? ' in-pantry' : ''}" data-idx="${idx}">
-      <button class="grocery-pantry-btn${inPantry ? ' active' : ''}" data-idx="${idx}" title="${inPantry ? 'Mark as needed' : 'Mark as in pantry'}">✓</button>
-      ${imgPart}
-      <span class="grocery-item-name">${escHtml(item.name)}</span>
-      ${amountControls}
-      <span class="grocery-item-recipes">${escHtml(recipesStr)}</span>
+      <div class="grocery-item-main">
+        <button class="grocery-pantry-btn${inPantry ? ' active' : ''}" data-idx="${idx}" title="${inPantry ? 'Mark as needed' : 'Mark as in pantry'}">✓</button>
+        ${imgPart}
+        <span class="grocery-item-name">${escHtml(item.name)}</span>
+        ${amountControls}
+      </div>
+      ${recipesRow}
     </li>`;
   }).join('');
 
@@ -593,11 +620,29 @@ function copyGroceryList() {
       return parts.join(' ');
     }).join('\n');
 
-  navigator.clipboard.writeText(text).then(() => {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Grocery list copied to clipboard', 'success');
+    }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
     showToast('Grocery list copied to clipboard', 'success');
-  }).catch(() => {
+  } catch {
     showToast('Failed to copy', 'error');
-  });
+  }
+  document.body.removeChild(ta);
 }
 
 // ── Modal helpers ──────────────────────────────────────────────────────────

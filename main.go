@@ -87,6 +87,7 @@ func main() {
 	mux.HandleFunc("POST /api/db/import",    h.ImportDB)
 
 	mux.HandleFunc("GET /api/pantry",             h.ListPantryItems)
+	mux.HandleFunc("GET /api/pantry/{id}/recipes", h.GetPantryItemRecipes)
 	mux.HandleFunc("POST /api/pantry",            h.CreatePantryItem)
 	mux.HandleFunc("POST /api/pantry/batch",      h.BatchAddPantryItems)
 	mux.HandleFunc("POST /api/pantry/merge",      h.MergePantryItems)
@@ -105,6 +106,14 @@ func main() {
 	mux.HandleFunc("POST /api/plans/{id}/entries", h.AddMealPlanEntry)
 	mux.HandleFunc("DELETE /api/plans/{id}/entries/{eid}", h.DeleteMealPlanEntry)
 	mux.HandleFunc("GET /api/plans/{id}/grocery", h.GetGroceryList)
+
+	// Standing grocery list (independent of any plan)
+	mux.HandleFunc("GET /api/grocery", h.ListGroceryItems)
+	mux.HandleFunc("POST /api/grocery", h.AddGroceryItems)
+	// Registered before /api/grocery/{id} so "checked" is not read as an id.
+	mux.HandleFunc("DELETE /api/grocery/checked", h.ClearCheckedGroceryItems)
+	mux.HandleFunc("PATCH /api/grocery/{id}", h.UpdateGroceryItem)
+	mux.HandleFunc("DELETE /api/grocery/{id}", h.DeleteGroceryItem)
 
 	// Static files
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(cfg.UploadsDir))))
