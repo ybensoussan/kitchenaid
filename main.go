@@ -110,8 +110,9 @@ func main() {
 	// Standing grocery list (independent of any plan)
 	mux.HandleFunc("GET /api/grocery", h.ListGroceryItems)
 	mux.HandleFunc("POST /api/grocery", h.AddGroceryItems)
-	// Registered before /api/grocery/{id} so "checked" is not read as an id.
+	// Registered before /api/grocery/{id} so "checked"/"all" are not read as ids.
 	mux.HandleFunc("DELETE /api/grocery/checked", h.ClearCheckedGroceryItems)
+	mux.HandleFunc("DELETE /api/grocery/all", h.ClearAllGroceryItems)
 	mux.HandleFunc("PATCH /api/grocery/{id}", h.UpdateGroceryItem)
 	mux.HandleFunc("DELETE /api/grocery/{id}", h.DeleteGroceryItem)
 

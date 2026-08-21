@@ -89,3 +89,13 @@ func (h *Handler) ClearCheckedGroceryItems(w http.ResponseWriter, r *http.Reques
 	}
 	h.writeJSON(w, http.StatusOK, map[string]any{"deleted": n})
 }
+
+// ClearAllGroceryItems handles DELETE /api/grocery/all
+func (h *Handler) ClearAllGroceryItems(w http.ResponseWriter, r *http.Request) {
+	n, err := h.Store.ClearAllGroceryItems()
+	if err != nil {
+		h.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]any{"deleted": n})
+}

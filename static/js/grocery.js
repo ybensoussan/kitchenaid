@@ -9,6 +9,7 @@
   const unitInput  = document.getElementById('gl-add-unit');
   const shareBtn   = document.getElementById('share-btn');
   const clearBtn   = document.getElementById('clear-done-btn');
+  const clearAllBtn = document.getElementById('clear-all-btn');
   const addWeekBtn = document.getElementById('add-week-btn');
 
   let items = [];
@@ -30,6 +31,7 @@
       ? ''
       : `${outstanding} to buy${items.length - outstanding ? ` · ${items.length - outstanding} done` : ''}`;
     clearBtn.disabled = items.length === outstanding;
+    clearAllBtn.disabled = items.length === 0;
 
     if (items.length === 0) {
       listEl.innerHTML = `
@@ -133,6 +135,24 @@
       render();
       showToast(`Cleared ${done} item${done === 1 ? '' : 's'}`);
     } catch (e) {
+      showToast(`Could not clear: ${e.message}`, true);
+    }
+  });
+
+  // Wiping items you have not bought yet is not recoverable, so confirm first.
+  clearAllBtn.addEventListener('click', async () => {
+    const total = items.length;
+    if (!total) return;
+    if (!confirm(`Remove all ${total} item${total === 1 ? '' : 's'} from the list?`)) return;
+    const before = items;
+    try {
+      await api.clearAllGrocery();
+      items = [];
+      render();
+      showToast(`Cleared ${total} item${total === 1 ? '' : 's'}`);
+    } catch (e) {
+      items = before;
+      render();
       showToast(`Could not clear: ${e.message}`, true);
     }
   });

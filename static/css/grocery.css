@@ -30,6 +30,9 @@
 }
 .gl-toolbar-actions { display: flex; gap: 0.5rem; }
 .gl-toolbar-actions .btn:disabled { opacity: 0.4; cursor: default; }
+/* Emptying the whole list is destructive — colour it so it reads that way,
+   but only once it can actually do something. */
+.gl-clear-all:not(:disabled) { color: var(--error); }
 
 /* ── List ── */
 .gl-list {

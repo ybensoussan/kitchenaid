@@ -146,3 +146,12 @@ func (s *Store) ClearCheckedGroceryItems() (int64, error) {
 	}
 	return res.RowsAffected()
 }
+
+// ClearAllGroceryItems empties the list, ticked off or not.
+func (s *Store) ClearAllGroceryItems() (int64, error) {
+	res, err := s.db.Exec(`DELETE FROM grocery_items`)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}

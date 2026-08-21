@@ -103,4 +103,5 @@ const api = {
   updateGrocery:      (id, patch)              => api.patch(`/api/grocery/${id}`, patch),
   deleteGrocery:      (id)                     => api.delete(`/api/grocery/${id}`),
   clearCheckedGrocery: ()                      => api.delete('/api/grocery/checked'),
+  clearAllGrocery:    ()                       => api.delete('/api/grocery/all'),
 };
