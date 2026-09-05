@@ -7,7 +7,7 @@
   const nameInput  = document.getElementById('gl-add-name');
   const amtInput   = document.getElementById('gl-add-amount');
   const unitInput  = document.getElementById('gl-add-unit');
-  const shareBtn   = document.getElementById('share-btn');
+  const copyKeepBtn = document.getElementById('copy-keep-btn');
   const clearBtn   = document.getElementById('clear-done-btn');
   const clearAllBtn = document.getElementById('clear-all-btn');
   const addWeekBtn = document.getElementById('add-week-btn');
@@ -32,6 +32,7 @@
       : `${outstanding} to buy${items.length - outstanding ? ` · ${items.length - outstanding} done` : ''}`;
     clearBtn.disabled = items.length === outstanding;
     clearAllBtn.disabled = items.length === 0;
+    copyKeepBtn.disabled = outstanding === 0;
 
     if (items.length === 0) {
       listEl.innerHTML = `
@@ -196,7 +197,7 @@
     return date.toISOString().slice(0, 10);
   }
 
-  // ── Share ─────────────────────────────────────────────────────────────────
+  // ── Copy to Keep ──────────────────────────────────────────────────────────
   // Google Keep has no write API for personal accounts, so the OS share sheet
   // is the route into it. Keep receives this as a plain note; turning it into
   // a checklist is one tap (＋ → Checkboxes), and that conversion makes EVERY
@@ -221,7 +222,7 @@
       .join('\n');
   }
 
-  shareBtn.addEventListener('click', async () => {
+  copyKeepBtn.addEventListener('click', async () => {
     const outstanding = items.filter(i => !i.checked);
     if (!outstanding.length) {
       showToast('Nothing left to buy');
@@ -241,7 +242,7 @@
       await navigator.clipboard.writeText(text);
       showToast('Copied — paste into Keep, then ＋ → Checkboxes');
     } catch (_) {
-      showToast('Could not share on this device', true);
+      showToast('Could not copy the list on this device', true);
     }
   });
 
